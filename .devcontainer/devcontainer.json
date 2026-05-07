@@ -1,0 +1,175 @@
+/*
+
+#see network.png
+
+--network=host makes the Dev Container (the box on the left) share the same network 
+namespace as the microVM (the outer box that contains both inner boxes).
+
+That means the Dev Container can directly see and use all ports and services running 
+inside the microVM — including the Docker MCP Services on the right (can only see 
+them if those services expose ports to the host (WSL2) — as if they were on 
+the same machine.
+
+If you comment it out, the Dev Container gets its own isolated network, so it can’t 
+automatically reach those services unless you explicitly connect them through a shared 
+Docker network.
+
+// PYTHON MCP SDK MODE:
+// No special extensions needed beyond Python.
+  No special extentions needed for Python MCP SDK Mode
+  The Python MCP SDK is just a Python library installed via requirements.txt.
+
+  PYTHON MCP SDK does not require:
+
+        special VS Code extensions
+        special system packages
+        special Docker mounts
+        special environment variables
+        special Node tooling
+
+  So the Dev Container already supports it by default because it includes:
+
+        Python
+        pip
+        requirements.txt
+        VS Code Python extensions
+
+
+        Docker MCP Toolkit does need Dev Container additions
+        Docker‑based MCP Toolkit requires:
+
+            Docker socket mount
+            Docker CLI
+            Docker VS Code extension
+            REST Client extension (optional but useful)
+
+    So those appear in the Dev Container.
+
+    (4) Provide both custom MCP and Docker MCP Toolkit mode
+The comments and extension list support both:
+Python MCP SDK mode: No special extensions, just Python and pip.
+Docker MCP Toolkit mode: Docker socket (commented out for strict isolation), Docker CLI, Docker VS Code extension, REST Client.
+The configuration and comments clearly distinguish between the two modes.
+(5) Anything missed?
+The postCreateCommand points to .devcontainer/setup.sh, but this file is not shown—ensure it installs all required dependencies (Node, Google Cloud CLI, etc.) as described in your documentation.
+If you want to prevent any workspace mounting, you may need to explicitly set workspaceMount to "none" or use a Dockerfile that copies only the needed files.
+If you want to allow switching between modes (strict isolation vs. Docker MCP Toolkit), consider documenting how to toggle the Docker socket mount and network settings.
+The documentation and comments are clear, but make sure the actual setup.sh and requirements.txt are up to date with your intended toolchain.
+
+  // -------------------------------------------------------------------
+  // NETWORKING
+  // -------------------------------------------------------------------
+  // The container joins the 'mcp-net' Docker network for isolation.
+  // 
+  // --network=mcp-net (default here):
+  //   - PROS:
+  //       * Isolates the Dev Container from the host network for better security.
+  //       * Allows communication with other containers on 'mcp-net' (e.g., MCP microservices).
+  //       * Prevents accidental exposure of services to the host.
+  //   - CONS:
+  //       * The Dev Container cannot directly access services running on the host unless explicitly exposed.
+  //       * Requires explicit Docker network configuration for inter-container communication.
+  //
+  // --network=host (alternative, commented out):
+  //   - PROS:
+  //       * Dev Container shares the host network namespace.
+  //       * Can directly access all ports/services running on the host (e.g., WSL2, host-based Docker services).
+  //       * Simplifies networking for development/debugging.
+  //   - CONS:
+  //       * Reduces isolation—services in the container are accessible from the host.
+  //       * Potential for port conflicts and security risks.
+  //       * Not supported on all platforms (e.g., not on macOS).
+  //
+  // To allow host Docker access, uncomment the Docker socket mount below.
+  
+*/
+
+{
+  // -------------------------------------------------------------------
+  // MicroVM AI Agent Dev Container
+  // -------------------------------------------------------------------
+  "name": "MicroVM AI Agent Dev Container",
+  // -------------------------------------------------------------------
+  // BASE IMAGE
+  // -------------------------------------------------------------------
+  // We use the official Python 3.12 image directly.
+  // No Dockerfile is needed because:
+  //   - All required tools (Node, Google Cloud CLI, build tools, etc.)
+  //     are installed via the postCreateCommand (see setup.sh).
+  //   - No custom OS-level modifications or extra files are needed at build time.
+  //   - This keeps the setup simple and reproducible.
+  "image": "python:3.12",
+  // -------------------------------------------------------------------
+  // Rootless Docker-in-Docker 
+  // -------------------------------------------------------------------
+  // Instead of using the host's Docker, you run a completely independent Docker daemon 
+  // inside your container that runs as a non-privileged user.
+  // How it works: The container runs its own dockerd using User Namespaces. Even if a 
+  // process escapes the inner Docker, it only "breaks out" into the Dev Container, not 
+  // your actual laptop. Implementation: Use the docker-in-docker feature but configure it 
+  // for Rootless mode.
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "installDockerBuildx": true,
+      "rootless": true,
+      "moby": false
+    }
+  },
+  // -------------------------------------------------------------------
+  // NETWORKING
+  // -------------------------------------------------------------------
+  // The container joins the 'mcp-net' Docker network for isolation.
+  // To allow host Docker access, uncomment the Docker socket mount below.
+  "runArgs": [
+    "--network=mcp-net"
+    // "-v",
+    // "/var/run/docker.sock:/var/run/docker.sock" // Uncomment for Docker MCP Toolkit mode
+  ],
+  // -------------------------------------------------------------------
+  // POST-CREATE SETUP
+  // -------------------------------------------------------------------
+  // All additional dependencies (Node, Google Cloud CLI, Docker network setup) are
+  // installed after the container is created, using this script.
+  // This approach avoids the need for a custom Dockerfile.
+  // Note: The 'mcp-net' Docker network is created by setup.sh (step 9), so it will
+  //       be available before services attempt to join it during later operations.
+  "postCreateCommand": ".devcontainer/setup.sh",
+  // -------------------------------------------------------------------
+  // VS CODE EXTENSIONS
+  // -------------------------------------------------------------------
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Python MCP SDK Mode (default)
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "GoogleCloudTools.cloudcode",
+        // Docker MCP Toolkit Mode (optional, for microservice debugging)
+        "ms-azuretools.vscode-docker",
+        "humao.rest-client"
+      ]
+    }
+  },
+  // -------------------------------------------------------------------
+  // USER
+  // -------------------------------------------------------------------
+  "remoteUser": "root",
+  // -------------------------------------------------------------------
+  // PORT FORWARDING
+  // -------------------------------------------------------------------
+  // Applies to both MCP SDK and Docker MCP Toolkit modes.
+  "forwardPorts": [
+    3000,
+    5000,
+    8000,
+    8080
+  ]
+  // -------------------------------------------------------------------
+  // WORKSPACE MOUNTING (Optional)
+  // -------------------------------------------------------------------
+  // By default, VS Code mounts the project root.
+  // To enforce strict isolation, set workspaceMount to "none" or copy only needed files in Dockerfile.
+  // "workspaceMount": "source=c:/Users/utpal/projects/code,target=/workspace/code,type=bind",
+  // "workspaceFolder": "/workspace/code"
+}

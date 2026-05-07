@@ -1,0 +1,127 @@
+###############################
+# Qdrant 
+###############################
+qdrant-client
+sentence-transformers
+
+###############################
+# CORE RUNTIME DEPENDENCIES
+###############################
+
+#fastapi==0.110.0
+fastapi>=0.110.1,<1
+# Required ONLY if your agent exposes a local API endpoint.
+# Optional: Remove if you are not building a web backend.
+
+#uvicorn==0.29.0
+uvicorn>=0.31.1,<1
+# Required only if FastAPI is used.
+# Optional: Remove if no web server is needed.
+
+requests==2.31.0
+# Required for BOTH modes:
+# - Python MCP SDK: agent may call MCP servers over HTTP.
+# - Docker MCP Toolkit: agent calls microservices via HTTP APIs.
+
+
+###############################
+# DATA PROCESSING / UTILITIES
+###############################
+
+numpy==1.26.4
+# Optional: Needed only if your agent performs numerical or vector operations.
+
+pandas==2.2.1
+# Optional: Needed only for tabular data processing or analytics.
+
+
+###############################
+# AI / AGENT FRAMEWORKS
+###############################
+
+openai==1.14.0
+# Required: If your agent calls OpenAI models.
+
+#langchain==0.1.13
+# Optional: Only needed if you use LangChain abstractions.
+# Remove if you prefer a lightweight agent without LangChain.
+
+
+###############################
+# MCP SUPPORT (TWO MODES)
+###############################
+
+# --- PYTHON MCP SDK MODE ---
+# mcp==0.3.0 commented out — this version is not available for Python 3.12.
+# Devcontainer build failed with "No matching distribution found".
+# mcp==0.3.0
+mcp==1.27.0 #use this version
+
+# Required ONLY if:
+#   - You are building your own Python-based MCP server, OR
+#   - You want your agent to use the Python MCP client SDK.
+# Remove or comment out if using Docker MCP Toolkit exclusively.
+
+# --- DOCKER MCP TOOLKIT MODE ---
+# NOTE: mcp==1.27.0 requires httpx>=0.27.1.
+# Pinning httpx==0.27.0 causes a version conflict and build failure.
+# Update to httpx==0.27.1 (strict) or httpx>=0.27.1,<1 (flexible) to resolve.
+#httpx==0.27.0
+httpx>=0.27.1
+# Recommended: async HTTP client for talking to Docker-based MCP microservices.
+
+websockets==12.0
+# Optional: Only needed if your Docker MCP Toolkit uses WebSockets.
+
+grpcio==1.62.0
+# Optional: Only needed if your Docker MCP Toolkit exposes gRPC endpoints.
+
+pydantic>=2.11.0,<3
+# Optional: Useful for modeling structured request/response objects
+# when interacting with microservices.
+
+
+
+###############################
+# GOOGLE CLOUD SUPPORT
+###############################
+
+google-auth==2.39.0
+# Recommended: Core Google Cloud authentication for ADC and service accounts.
+
+google-cloud-storage==2.19.0
+# Optional: Needed if your agent reads or writes files in GCS.
+
+google-cloud-secret-manager==2.23.1
+# Optional: Needed if your agent retrieves secrets from Google Secret Manager.
+
+google-cloud-bigquery==3.31.0
+# Optional: Needed if your agent queries or writes BigQuery tables.
+
+google-cloud-aiplatform==1.89.0
+# Optional: Needed for Vertex AI integrations on Google Cloud.
+
+
+###############################
+# DEVELOPMENT TOOLS
+###############################
+
+black==24.3.0
+# Optional: Code formatter for consistent style.
+
+flake8==7.0.0
+# Optional: Linter for catching errors and enforcing style.
+
+pytest==8.1.0
+# Optional: Only needed if you write automated tests.
+
+
+###############################
+# JUPYTER / VS CODE INTEGRATION
+###############################
+
+jupyterlab==4.1.5
+# Optional: Needed only if you want notebooks inside the Dev Container.
+
+ipykernel==6.29.4
+# Optional: Required for Jupyter + VS Code interactive Python kernels.

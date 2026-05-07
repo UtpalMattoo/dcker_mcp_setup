@@ -1,0 +1,119 @@
+
+###############################################
+# docker‑compose.yml is used to start multiple 
+# containers together as one application and to 
+# define how those containers connect, share 
+# networks, and run. One file that orchestrates 
+# a whole group of containers
+###############################################
+
+###############################################
+# NOTE: Dependency Persistence
+#
+# Services that run `pip install` at startup
+# (e.g. main_starter_service) install packages
+# into the container's writable layer, which is
+# EPHEMERAL — packages are lost when the
+# container is removed or recreated.
+#
+# This means every cold start re-runs pip install,
+# which is slow and fragile (network-dependent).
+#
+# RECOMMENDED FUTURE IMPROVEMENT: Custom Dockerfile
+#
+# Build a custom image with dependencies baked in:
+#
+#   FROM python:3.12
+#   COPY requirements.txt .
+#   RUN pip install -r requirements.txt
+#
+# Then reference it here with `build: ./main_starter_service`
+# instead of `image: python:3.12`.
+#
+# Benefits:
+# - No pip install at container startup
+# - Faster container start times
+# - Reproducible — image is versioned and cacheable
+# - Dependencies available immediately for `docker exec`
+###############################################
+
+
+###############################################
+# Shared Docker Network (external)
+# Created by setup.sh → mcp-net
+###############################################
+networks:
+  mcp-net:
+    external: true
+
+###############################################
+#Each service in its own separate container 
+#One docker-compose.yml file can define and 
+#start multiple services, each running in its 
+#own container.
+###############################################
+
+services:
+  ###############################################
+  # Qdrant service for vector search
+  ###############################################
+  
+  qdrant-db:
+    # Start a container that runs the Qdrant server
+    image: docker.io/qdrant/qdrant:latest
+    container_name: qdrant-db
+    restart: unless-stopped
+    networks:
+      - mcp-net
+    ports:
+      - "6333:6333"
+    volumes:
+      - vector-db-data:/qdrant/storage
+
+  ###############################################
+  # New main starter service (replacing mcp_docker_server)
+  ###############################################
+  # Testing note:
+  # For Qdrant service pytest steps (including port 6333 details and
+  # why tests run from the dev container terminal), see:
+  # MICROVM_DEVCONTAINER_STEPS.md -> "9. Testing the Qdrant Service"
+  main_starter_service:
+    image: python:3.12
+    container_name: main_starter_service
+    restart: no #unless-stopped
+    networks:
+      - mcp-net
+    environment:
+      - PYTHONUNBUFFERED=1
+      - QDRANT_HOST=qdrant-db
+      - PYTHONPATH=/
+    volumes:
+      - ./main_starter_service:/main_starter_service
+      - ./qdrant:/qdrant
+      - ../.devcontainer/requirements.txt:/main_starter_service/requirements.txt
+    working_dir: /main_starter_service
+    command: sh -c "pip install -r requirements.txt"
+
+  ###############################################
+  # New second custom MCP work service 
+  # (replacing python-mcp-server)
+  ###############################################
+  second-service-custom-mcp-work:
+    image: python:3.12
+    container_name: second-service-custom-mcp-work
+    restart: unless-stopped
+    networks:
+      - mcp-net
+    environment:
+      - PYTHONUNBUFFERED=1
+      - QDRANT_HOST=qdrant-db
+    volumes:
+      - ./second-service-custom-mcp-work:/second-service-custom-mcp-work
+    working_dir: /second-service-custom-mcp-work
+    command: ["python", "python_custom_server.py"]
+
+###############################################
+# Volumes for persistence
+###############################################
+volumes:
+  vector-db-data:
