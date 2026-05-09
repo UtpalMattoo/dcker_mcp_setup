@@ -1,5 +1,3 @@
-import pytest
-
 import sys
 from pathlib import Path
 
@@ -29,4 +27,35 @@ def test_upsert_embedding():
     qdrant = QdrantHelper(host=qdrant_host)
     vector = [0.2] * 384
     qdrant.upsert_embedding(vector, {"text": "test"}, point_id=2)
-    # Optionally, add retrieval and assertion logic here
+
+
+def test_retrieve_upserted_embedding():
+    import os
+    qdrant_host = os.environ["QDRANT_HOST"]  # Will raise KeyError if not set
+    qdrant = QdrantHelper(host=qdrant_host)
+
+    # Read an existing point from Qdrant and verify stored data shape.
+    points, _ = qdrant.client.scroll(
+        collection_name=qdrant.collection,
+        limit=1,
+        with_payload=True,
+        with_vectors=True,
+    )
+
+    # Ensure at least one vector already exists in the collection.
+    assert len(points) >= 1, "No vectors found in collection; insert data before retrieval test"
+
+    # Select the first returned point for structural validation.
+    point = points[0]
+
+    # A valid Qdrant point must include a non-null unique identifier.
+    assert point.id is not None
+
+    # Confirm metadata (payload) exists alongside the stored vector.
+    assert point.payload is not None
+
+    # Verify the retrieved vector dimension matches the collection schema.
+    assert len(point.vector) == qdrant.dim
+
+    # Verify every vector entry is numeric and usable for similarity math.
+    assert all(isinstance(value, (int, float)) for value in point.vector)

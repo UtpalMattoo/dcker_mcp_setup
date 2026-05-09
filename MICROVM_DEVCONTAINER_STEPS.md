@@ -214,6 +214,13 @@ cd /workspaces/dcker_mcp_setup
 QDRANT_HOST=localhost pytest tests/ -v
 ```
 
+> Note: `pytest tests/ -v` discovers and runs all matching test files and test cases under the `tests/` folder, not just one file.
+>
+> Pytest discovery rules (default):
+> - Test files: `test_*.py` or `*_test.py`
+> - Test functions: `test_*`
+> - Test classes: `Test*` (class name starts with `Test`)
+
 `QDRANT_HOST=localhost` is intentional for terminal-based runs via the mapped host port.
 
 Or use the project test script:
