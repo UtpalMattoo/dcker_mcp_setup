@@ -75,6 +75,8 @@ The `devcontainer.json` is configured to:
 - Join the `mcp-net` Docker network via `runArgs`
 - Run `.devcontainer/setup.sh` after container creation
 
+These forwarded ports are convenience defaults for common development stacks, such as React or Vite on `3000`, Flask or FastAPI on `5000`, Django or Uvicorn on `8000`, and alternate web apps or preview servers on `8080`. They do not mean four services must be running; only the port your app actually uses needs to be forwarded.
+
 ## 3. Post-Create Setup Actions
 
 On first container creation, `.devcontainer/setup.sh` runs automatically via `postCreateCommand`. This script performs the following steps:

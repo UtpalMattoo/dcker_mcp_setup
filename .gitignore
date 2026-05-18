@@ -38,6 +38,9 @@ services/main_starter_service/qdrant/
 # Logs
 *.log
 
+# Local-only observability path variables
+observability/LOCAL_PATH_VARIABLES.md
+
 # Any data for a semantic store
 context_data/Python/
 context_data/NBExample/
