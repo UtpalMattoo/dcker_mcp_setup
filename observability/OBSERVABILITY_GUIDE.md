@@ -441,7 +441,7 @@ Benefits:
 
 ## Add Telemetry Contracts Documentation
 
-Suggested structure:
+Suggested future structure (optional addition, not required in the current setup):
 
 ```text
 observability/contracts/
@@ -452,6 +452,8 @@ observability/contracts/
 ```
 
 This documents telemetry conventions and expectations.
+
+Note: This directory is a recommendation for future hardening and documentation clarity. It may not exist in the current repository layout yet.
 
 ---
 

@@ -1,0 +1,38 @@
+// OTLP Traces receiver and processor module
+// Receives traces via OTLP gRPC and HTTP, applies processing, and exports to LGTM
+
+otlp.receiver "default" {
+  protocols {
+    grpc {
+      endpoint = "0.0.0.0:4317"
+    }
+    http {
+      endpoint = "0.0.0.0:4318"
+    }
+  }
+
+  output {
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
+
+// Batch processor: group traces for efficient export
+otelcol.processor.batch "default" {
+  send_batch_size    = 1024
+  send_batch_max_size = 2048
+  timeout            = "5s"
+
+  output {
+    traces = [otelcol.exporter.otlp.lgtm.input]
+  }
+}
+
+// Export traces to LGTM backend
+otelcol.exporter.otlp "lgtm" {
+  client {
+    endpoint = "lgtm:4317"
+    tls {
+      insecure = true
+    }
+  }
+}

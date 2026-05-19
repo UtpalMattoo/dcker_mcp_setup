@@ -39,12 +39,16 @@
 
 
 ###############################################
-# Shared Docker Network (external)
-# Created by setup.sh → mcp-net
+# Shared Docker Networks
+# - mcp-net: existing service-to-service network (external, created separately)
+# - observability: shared with observability stack for telemetry collection (external)
 ###############################################
 networks:
   mcp-net:
     external: true
+  observability:
+    external: true
+    driver: bridge
 
 ###############################################
 #Each service in its own separate container 
@@ -65,6 +69,7 @@ services:
     restart: unless-stopped
     networks:
       - mcp-net
+      - observability
     ports:
       - "6333:6333"
     volumes:
@@ -83,10 +88,14 @@ services:
     restart: no #unless-stopped
     networks:
       - mcp-net
+      - observability
     environment:
       - PYTHONUNBUFFERED=1
       - QDRANT_HOST=qdrant-db
       - PYTHONPATH=/
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
+      - OTEL_SERVICE_NAME=main_starter_service
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=main_starter_service,service.version=1.0
     volumes:
       - ./main_starter_service:/main_starter_service
       - ./qdrant:/qdrant
@@ -104,9 +113,13 @@ services:
     restart: unless-stopped
     networks:
       - mcp-net
+      - observability
     environment:
       - PYTHONUNBUFFERED=1
       - QDRANT_HOST=qdrant-db
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
+      - OTEL_SERVICE_NAME=second-service-custom-mcp-work
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=second-service-custom-mcp-work,service.version=1.0
     volumes:
       - ./second-service-custom-mcp-work:/second-service-custom-mcp-work
     working_dir: /second-service-custom-mcp-work

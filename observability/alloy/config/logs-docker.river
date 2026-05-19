@@ -1,0 +1,135 @@
+// Docker/Application logs collection module
+// Reads application service logs (main_starter_service, second-service-custom-mcp-work)
+// with credential and path redaction before forwarding to Loki
+
+loki.source.file "docker_app_logs" {
+  // Read from Docker container log files
+  // Typically at /var/lib/docker/containers/{container_id}/{container_id}-json.log
+  // Instead of using docker.sock, we mount explicit paths
+  
+  targets = [{
+    __path__       = "/mnt/service-logs/*.log",
+    service_name   = "application",
+    source_type    = "docker",
+  }]
+
+  forward_to = [loki.process.app_redaction.receiver]
+}
+
+// Redaction pipeline for application logs
+loki.process "app_redaction" {
+  // Redact API keys
+  stage.regex {
+    expression = "api[_-]?key[\"\\s:=]*([A-Za-z0-9\\-._~+/]+=*)"
+    action     = "replace"
+    replace    = "apikey=<REDACTED_API_KEY>"
+  }
+
+  // Redact database connection strings
+  stage.regex {
+    expression = "(password=)([^\\s&;]+)"
+    action     = "replace"
+    replace    = "$1<REDACTED_DB_PASSWORD>"
+  }
+
+  // Redact bearer tokens
+  stage.regex {
+    expression = "(authorization|auth)[\"\\s:=]*Bearer\\s+[A-Za-z0-9\\-._~+/]+=*"
+    action     = "replace"
+    replace    = "$1: Bearer <REDACTED_TOKEN>"
+  }
+
+  // Redact passwords
+  stage.regex {
+    expression = "(password|passwd|pwd)[\"\\s:=]*([^\\s\"\\}\\]]+)"
+    action     = "replace"
+    replace    = "$1=<REDACTED_PASSWORD>"
+  }
+
+  // Redact AWS access keys
+  stage.regex {
+    expression = "AKIA[0-9A-Z]{16}"
+    action     = "replace"
+    replace    = "AKIA<REDACTED_AWS_KEY>"
+  }
+
+  // Redact Windows paths
+  stage.regex {
+    expression = "[A-Z]:\\\\(?:[^\\s\\\\]+\\\\)*[^\\s\\\\]*"
+    action     = "replace"
+    replace    = "<PATH_REDACTED>"
+  }
+
+  // Parse structured logs if JSON format
+  stage.json {
+    expressions = {
+      level       = "level",
+      timestamp   = "timestamp",
+      message     = "message",
+      service     = "service",
+    }
+    on_error = "keep"
+  }
+
+  // Add labels from parsed fields
+  stage.labels {
+    values = {
+      service = "application",
+      env     = "local",
+    }
+  }
+
+  forward_to = [loki.write.app_logs.receiver]
+}
+
+// Write to Loki
+loki.write "app_logs" {
+  loki {
+    url = "http://lgtm:3100/loki/api/v1/push"
+  }
+
+  external_labels = {
+    service = "application",
+    environment = "local",
+  }
+}
+
+// Optional: Also read Qdrant logs if enabled
+loki.source.file "qdrant_logs" {
+  targets = [{
+    __path__       = "/mnt/qdrant-logs/*.log",
+    service_name   = "qdrant-db",
+    source_type    = "docker",
+  }]
+
+  forward_to = [loki.process.qdrant_redaction.receiver]
+}
+
+loki.process "qdrant_redaction" {
+  // Redact API keys if Qdrant uses them
+  stage.regex {
+    expression = "api[_-]?key[\"\\s:=]*([A-Za-z0-9\\-._~+/]+=*)"
+    action     = "replace"
+    replace    = "apikey=<REDACTED_API_KEY>"
+  }
+
+  stage.labels {
+    values = {
+      service = "qdrant",
+      env     = "local",
+    }
+  }
+
+  forward_to = [loki.write.qdrant_logs.receiver]
+}
+
+loki.write "qdrant_logs" {
+  loki {
+    url = "http://lgtm:3100/loki/api/v1/push"
+  }
+
+  external_labels = {
+    service = "qdrant",
+    environment = "local",
+  }
+}

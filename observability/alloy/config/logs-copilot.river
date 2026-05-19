@@ -1,0 +1,96 @@
+// GitHub Copilot extension logs collection module
+// Tails Copilot logs with CRITICAL redaction before forwarding to Loki
+// 
+// WARNING: Copilot logs contain user prompts, responses, and API interactions
+// This module applies strict redaction patterns
+
+loki.source.file "copilot" {
+  // Path should be set via LOCAL_PATH_VARIABLES.md
+  // For Windows: typically %APPDATA%\Code\User\globalStorage\GitHub.copilot\...
+  // This will be mounted as /mnt/copilot-logs in container
+  
+  targets = [{
+    __path__       = "/mnt/copilot-logs/*.log",
+    service_name   = "copilot",
+    source_type    = "file",
+  }]
+
+  forward_to = [loki.process.copilot_redaction.receiver]
+}
+
+// Aggressive redaction pipeline for Copilot logs
+loki.process "copilot_redaction" {
+  // Redact OpenAI API keys (sk-...)
+  stage.regex {
+    expression = "sk-[A-Za-z0-9]{20,}"
+    action     = "replace"
+    replace    = "sk-<REDACTED_OPENAI_KEY>"
+  }
+
+  // Redact GitHub Copilot tokens
+  stage.regex {
+    expression = "gh[pousr]{1}_[A-Za-z0-9_]{36,255}"
+    action     = "replace"
+    replace    = "gh_<REDACTED_GITHUB_TOKEN>"
+  }
+
+  // Redact bearer tokens
+  stage.regex {
+    expression = "(authorization|auth)[\"\\s:=]*Bearer\\s+[A-Za-z0-9\\-._~+/]+=*"
+    action     = "replace"
+    replace    = "$1: Bearer <REDACTED_TOKEN>"
+  }
+
+  // Redact session tokens
+  stage.regex {
+    expression = "(session|sessionid|session_id)[\"\\s:=]*([A-Za-z0-9\\-._~+/]+=*)"
+    action     = "replace"
+    replace    = "$1=<REDACTED_SESSION>"
+  }
+
+  // Redact API keys
+  stage.regex {
+    expression = "api[_-]?key[\"\\s:=]*([A-Za-z0-9\\-._~+/]+=*)"
+    action     = "replace"
+    replace    = "apikey=<REDACTED_API_KEY>"
+  }
+
+  // Redact Windows paths
+  stage.regex {
+    expression = "[A-Z]:\\\\(?:[^\\s\\\\]+\\\\)*[^\\s\\\\]*"
+    action     = "replace"
+    replace    = "<PATH_REDACTED>"
+  }
+
+  stage.json {
+    expressions = {
+      level       = "level",
+      timestamp   = "timestamp",
+      message     = "message",
+    }
+    on_error = "keep"
+  }
+
+  stage.labels {
+    values = {
+      service = "copilot",
+      env     = "local",
+      sensitivity = "high",
+    }
+  }
+
+  forward_to = [loki.write.copilot_restricted.receiver]
+}
+
+// Write to Loki with sensitive label
+loki.write "copilot_restricted" {
+  loki {
+    url = "http://lgtm:3100/loki/api/v1/push"
+  }
+
+  external_labels = {
+    service = "copilot",
+    environment = "local",
+    access_level = "restricted",
+  }
+}

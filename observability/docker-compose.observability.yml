@@ -1,0 +1,81 @@
+version: '3.9'
+
+services:
+  # LGTM Stack: Loki, Tempo, Mimir, Grafana
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: otel-lgtm
+    ports:
+      - "3000:3000"    # Grafana UI
+      - "4317:4317"    # OTLP gRPC receiver
+      - "4318:4318"    # OTLP HTTP receiver
+      - "9411:9411"    # Zipkin receiver
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --no-verbose
+        - --tries=1
+        - --spider
+        - http://localhost:3000/api/health
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - observability
+
+  # Grafana Alloy: Telemetry collector and processor
+  alloy:
+    image: grafana/alloy:latest
+    container_name: grafana-alloy
+    command: run /etc/alloy/config.river --server.http.listen-addr=0.0.0.0:12345
+    ports:
+      - "12345:12345"  # Alloy UI
+      - "4317:4317"    # OTLP gRPC (alternative receiver if direct to Alloy)
+      - "4318:4318"    # OTLP HTTP (alternative receiver if direct to Alloy)
+      - "9411:9411"    # Zipkin receiver
+    volumes:
+      - ./alloy/config:/etc/alloy:ro
+      - alloy-data:/var/lib/alloy
+    env_file:
+      - ./alloy/env/alloy.env
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317
+      - ENABLE_VSCODE_LOGS=${ENABLE_VSCODE_LOGS:-true}
+      - ENABLE_COPILOT_LOGS=${ENABLE_COPILOT_LOGS:-false}
+      - ENABLE_SERVICE_LOGS=${ENABLE_SERVICE_LOGS:-true}
+      - ENABLE_QDRANT_LOGS=${ENABLE_QDRANT_LOGS:-true}
+      - REDACTION_MODE=${REDACTION_MODE:-strict}
+    depends_on:
+      lgtm:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --no-verbose
+        - --tries=1
+        - --spider
+        - http://localhost:12345/api/v1/status
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - observability
+    restart: unless-stopped
+
+volumes:
+  alloy-data:
+    driver: local
+
+networks:
+  # External network shared with services compose
+  observability:
+    driver: bridge
+    external: true

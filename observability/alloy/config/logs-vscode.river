@@ -1,0 +1,61 @@
+// VS Code logs collection module
+// Tails VS Code logs with path redaction before forwarding to Loki
+
+// Conditionally include based on ENABLE_VSCODE_LOGS environment variable
+local.file "vscode_enabled" {
+  filename  = "/etc/alloy/vscode-enabled"
+  is_secret = false
+  optional  = true
+}
+
+loki.source.file "vscode" {
+  // Path should be set via LOCAL_PATH_VARIABLES.md
+  // For Windows: typically %APPDATA%\Code\logs\*.log
+  // This will be mounted as /mnt/vscode-logs in container
+  
+  targets = [{
+    __path__       = "/mnt/vscode-logs/*.log",
+    service_name   = "vscode",
+    source_type    = "file",
+  }]
+
+  forward_to = [loki.process.vscode_redaction.receiver]
+}
+
+// Redaction pipeline for VS Code logs
+loki.process "vscode_redaction" {
+  stage.regex {
+    expression = "(?P<redacted_path>[A-Z]:\\\\(?:[^\\s\\\\]+\\\\)*[^\\s\\\\]*|\\\\\\\\[^\\s\\\\]+\\\\[^\\s\\\\]*)"
+    action     = "replace"
+    replace    = "<PATH_REDACTED>"
+  }
+
+  stage.json {
+    expressions = {
+      level       = "level",
+      timestamp   = "timestamp",
+      message     = "message",
+    }
+  }
+
+  stage.labels {
+    values = {
+      service = "vscode",
+      env     = "local",
+    }
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// Write to Loki
+loki.write "default" {
+  loki {
+    url = "http://lgtm:3100/loki/api/v1/push"
+  }
+
+  external_labels = {
+    service = "vscode",
+    environment = "local",
+  }
+}

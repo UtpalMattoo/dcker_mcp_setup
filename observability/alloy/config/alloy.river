@@ -1,0 +1,54 @@
+// Root Alloy configuration - orchestrates modular telemetry collection
+// This file includes all sub-modules for traces, metrics, and logs
+
+// Global settings for the Alloy instance
+local.file "environment" {
+  filename  = "/etc/alloy/alloy.env"
+  is_secret = false
+}
+
+// Shared variables from environment
+locals {
+  enable_vscode_logs  = env("ENABLE_VSCODE_LOGS") == "true"
+  enable_copilot_logs = env("ENABLE_COPILOT_LOGS") == "true"
+  enable_service_logs = env("ENABLE_SERVICE_LOGS") == "true"
+  enable_qdrant_logs  = env("ENABLE_QDRANT_LOGS") == "true"
+  redaction_mode      = env("REDACTION_MODE") == "strict"
+}
+
+// OTLP Traces receiver and processor
+import.file "traces_otlp" {
+  filename = "/etc/alloy/traces-otlp.river"
+}
+
+// Prometheus scraping (Qdrant metrics)
+import.file "metrics_qdrant" {
+  filename = "/etc/alloy/metrics-qdrant.river"
+}
+
+// VS Code logs with redaction (conditional)
+import.file "logs_vscode" {
+  filename = "/etc/alloy/logs-vscode.river"
+}
+
+// Copilot logs with redaction (conditional)
+import.file "logs_copilot" {
+  filename = "/etc/alloy/logs-copilot.river"
+}
+
+// Docker/application logs with redaction (conditional)
+import.file "logs_docker" {
+  filename = "/etc/alloy/logs-docker.river"
+}
+
+// Logging configuration (debug mode if needed)
+logging {
+  level  = "info"
+  format = "json"
+}
+
+// Server configuration
+server {
+  http_listen_addr = "0.0.0.0:12345"
+  http_path_prefix = "/"
+}

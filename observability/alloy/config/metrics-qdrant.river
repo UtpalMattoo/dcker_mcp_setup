@@ -1,0 +1,38 @@
+// Prometheus metrics scraping module (Qdrant)
+// Scrapes Prometheus metrics from services and exports to LGTM
+
+prometheus.scrape "qdrant_metrics" {
+  targets = [{
+    __address__           = "qdrant-db:6333",
+    __scheme__            = "http",
+    __metrics_path__      = "/metrics",
+    job                   = "qdrant",
+    service_name          = "qdrant-db",
+  }]
+
+  scrape_interval = "30s"
+  scrape_timeout  = "10s"
+  honor_timestamps = true
+
+  forward_to = [prometheus.relabel.qdrant_labels.receiver]
+}
+
+// Add resource attributes and relabeling
+prometheus.relabel "qdrant_labels" {
+  forward_to = [otelcol.exporter.prometheus.lgtm.input]
+
+  rule {
+    source_labels = ["__address__"]
+    target_label  = "instance"
+  }
+
+  rule {
+    source_labels = ["job"]
+    target_label  = "job"
+  }
+}
+
+// Export metrics to LGTM (Mimir)
+otelcol.exporter.prometheus "lgtm" {
+  endpoint = "lgtm:9009"
+}

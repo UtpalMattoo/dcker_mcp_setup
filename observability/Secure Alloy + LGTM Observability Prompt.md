@@ -154,6 +154,55 @@ The architecture must follow these constraints:
 
 ---
 
+# Log Security and Access Control Requirements
+
+**These requirements are MANDATORY before implementation.**
+
+## 1. Log Sensitivity Assessment
+
+Conduct a sensitivity audit of all collected logs:
+
+* VS Code logs: identify telemetry types and potential sensitive data exposure
+* Copilot logs: identify prompts, responses, and interaction traces
+* application service logs: identify internal details and user data
+* Qdrant logs: identify query patterns and operational details
+
+Document findings in a telemetry audit checklist.
+
+## 2. Mandatory Log Redaction in Alloy Pipelines
+
+Before forwarding any logs to LGTM:
+
+* Define regex patterns for automatic redaction (API key formats, JWT patterns, tokens, credentials, PII)
+* Add redaction/replacement stages in each Alloy log pipeline (`logs-*.river` files)
+* Redaction MUST occur before data reaches Loki
+* Maintain a redaction patterns reference document for ongoing updates
+
+Example sensitive patterns to redact:
+* `api[_-]?key["\s:=]*([A-Za-z0-9\-._~+/]+=*)`
+* `(authorization|auth)["\s:=]*Bearer\s+[A-Za-z0-9\-._~+/]+=*`
+* `password["\s:=]*[^\s"]+`
+* `(token|secret)["\s:=]*[^\s"]+`
+
+## 3. Grafana Access Control (RBAC)
+
+Configure Grafana RBAC so that:
+
+* Only authorized users can view logs containing sensitive data
+* Separate dashboard/datasource permissions for production logs vs development logs
+* Audit logging enabled for sensitive data access
+* Environment-specific access restrictions
+
+## 4. CI Environment Portability
+
+Add environment flags to disable local log collection in CI:
+
+* `ENABLE_VSCODE_LOGS=false` disables VS Code log tailing
+* `ENABLE_COPILOT_LOGS=false` disables Copilot extension log tailing
+* Default: `true` for local development, `false` for CI/production
+
+---
+
 # Required Telemetry Sources
 
 ## 1. VS Code Logs
@@ -302,12 +351,14 @@ Provide modular Alloy configuration examples for:
 
 * OTLP receiver (gRPC + HTTP)
 * Prometheus scraping
-* log pipelines
-* VS Code logs
-* Copilot logs
+* log pipelines with mandatory redaction stages
+* VS Code logs with automatic redaction
+* Copilot logs with automatic redaction
 * Qdrant metrics
 * traces pipeline
 * exporters to LGTM
+
+**MANDATORY for log pipelines:** Include regex-based `loki.process` or equivalent filtering stages that apply redaction patterns defined in the "Log Security and Access Control Requirements" section before forwarding to Loki. Demonstrate how to redact API keys, tokens, credentials, and PII.
 
 Keep the configuration split across multiple `.river` files.
 
@@ -355,6 +406,7 @@ Provide:
 * commands to send test telemetry
 * commands to verify Alloy pipelines
 * Grafana verification steps
+* **commands to validate that redaction filters are working (verify sensitive patterns are NOT present in ingested logs)**
 * troubleshooting examples for:
 
   * missing telemetry
@@ -363,6 +415,7 @@ Provide:
   * failed scrapes
   * OTLP connection failures
   * label inconsistencies
+  * **redaction filter failures (patterns not redacting as expected)**
 
 ---
 
@@ -412,13 +465,14 @@ Include clear explanations for:
 Include suggestions for:
 
 * shared external Docker networks
-* telemetry standards documentation
+* telemetry standards documentation (optional future addition, for example a contracts folder if adopted)
 * centralized OTEL environment templates
 * healthchecks
 * sampling/rate limiting
 * retention policies
-* sensitive log redaction
 * future profile collection support
+
+Note: sensitive log redaction and Grafana RBAC are MANDATORY, not optional — they are fully specified in the "Log Security and Access Control Requirements" section above.
 
 ---
 
