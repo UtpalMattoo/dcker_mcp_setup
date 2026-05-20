@@ -24,6 +24,27 @@ htmlcov/
 *.p12
 *.pfx
 
+# Additional sensitive files and patterns
+.env.local
+*.tmp
+*.bak
+*.crt
+*.cfg
+*.ini
+*.yaml
+*.yml
+*.json
+*.sqlite
+*.db
+*.log.*
+*.swp
+*.swo
+*.orig
+*.rej
+*.backup
+*.old
+*.save
+
 # OS/editor local files
 .DS_Store
 .vscode/

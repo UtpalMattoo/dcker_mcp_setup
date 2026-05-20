@@ -211,6 +211,14 @@ docker compose -f services/docker-compose.yml up -d
 docker compose -f observability/docker-compose.observability.yml up -d
 ```
 
+Operational shortcut (recommended):
+
+```bash
+bash startup-test/startup-and-test.sh
+```
+
+The script applies ordered startup, readiness checks, and pytest execution across services and observability.
+
 Execution flow:
 
 1. The application stack starts
@@ -237,6 +245,8 @@ Production setups commonly add:
 * retry logic
 * startup delays
 * exporter retries
+
+In this repository, those concerns are operationalized in `startup-test/startup-and-test.sh`.
 
 ---
 

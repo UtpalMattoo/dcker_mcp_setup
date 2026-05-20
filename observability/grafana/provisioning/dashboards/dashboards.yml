@@ -1,12 +1,22 @@
 apiVersion: 1
 
 providers:
-  - name: 'Default'
+  - name: 'Development-Observability'
     orgId: 1
-    folder: ''
+    folder: 'Development Observability'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 10
     allowUiUpdates: true
     options:
-      path: /etc/grafana/provisioning/dashboards
+      path: /etc/grafana/provisioning/dashboards/development
+
+  - name: 'Restricted-Logs'
+    orgId: 1
+    folder: 'Restricted Logs'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/restricted

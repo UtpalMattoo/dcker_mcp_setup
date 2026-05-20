@@ -55,7 +55,7 @@ prometheus.scrape "qdrant_metrics" {
 # Logs via file tail from mounted container logs
 loki.source.file "qdrant_logs" {
   targets = [{
-    __path__ = "/mnt/qdrant-logs/*.log",
+    __path__ = "/mnt/service-logs/qdrant/*.log",
     service_name = "qdrant-db",
   }]
 }

@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # LGTM Stack: Loki, Tempo, Mimir, Grafana
   lgtm:
@@ -10,10 +8,15 @@ services:
       - "4317:4317"    # OTLP gRPC receiver
       - "4318:4318"    # OTLP HTTP receiver
       - "9411:9411"    # Zipkin receiver
+    env_file:
+      - ./grafana/env/grafana.env
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
     healthcheck:
       test:
         - CMD
@@ -42,6 +45,9 @@ services:
     volumes:
       - ./alloy/config:/etc/alloy:ro
       - alloy-data:/var/lib/alloy
+      - ./runtime-logs:/mnt/service-logs:ro
+      - ${VSCODE_LOGS_DIR:-${APPDATA}/Code/logs}:/mnt/vscode-logs:ro
+      - ${COPILOT_EXTENSION_LOGS_DIR:-${APPDATA}/Code/User/globalStorage/GitHub.copilot}:/mnt/copilot-logs:ro
     env_file:
       - ./alloy/env/alloy.env
     environment:
@@ -69,6 +75,29 @@ services:
     networks:
       - observability
     restart: unless-stopped
+
+  grafana-rbac-init:
+    image: curlimages/curl:8.11.1
+    container_name: grafana-rbac-init
+    depends_on:
+      lgtm:
+        condition: service_healthy
+    env_file:
+      - ./grafana/env/grafana.env
+    environment:
+      - GRAFANA_URL=http://lgtm:3000
+      - GRAFANA_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GRAFANA_DEV_VIEWER_USER=${GRAFANA_DEV_VIEWER_USER:-}
+      - GRAFANA_DEV_VIEWER_PASSWORD=${GRAFANA_DEV_VIEWER_PASSWORD:-}
+      - GRAFANA_RESTRICTED_USER=${GRAFANA_RESTRICTED_USER:-}
+      - GRAFANA_RESTRICTED_PASSWORD=${GRAFANA_RESTRICTED_PASSWORD:-}
+    command: ["sh", "/etc/grafana/rbac/bootstrap-rbac.sh"]
+    volumes:
+      - ./grafana/rbac:/etc/grafana/rbac:ro
+    networks:
+      - observability
+    restart: "no"
 
 volumes:
   alloy-data:

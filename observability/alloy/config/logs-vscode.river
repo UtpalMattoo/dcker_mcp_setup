@@ -14,10 +14,14 @@ loki.source.file "vscode" {
   // This will be mounted as /mnt/vscode-logs in container
   
   targets = [{
-    __path__       = "/mnt/vscode-logs/*.log",
+    __path__       = "/mnt/vscode-logs/**/*.log",
     service_name   = "vscode",
     source_type    = "file",
   }]
+
+  file_match {
+    enabled = true
+  }
 
   forward_to = [loki.process.vscode_redaction.receiver]
 }

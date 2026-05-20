@@ -180,6 +180,23 @@ There are two deliberate design decisions behind the current workflow:
 
 Because of this, the simplest and most stable approach is to run tests directly from the dev container terminal.
 
+### Canonical Startup/Test Entry Point
+
+Use the repo-root `startup-test/` folder as the canonical startup and test workflow:
+
+- `startup-test/startup-and-test.sh` for full ordered startup + tests
+- `startup-test/startup-and-test-lite.sh` for fast contract checks
+- `startup-test/cleanup.sh` for teardown
+
+Recommended from WSL shell:
+
+```bash
+cd /workspaces/dcker_mcp_setup
+bash startup-test/startup-and-test.sh
+```
+
+This centralizes ordering, health checks, and pytest execution as service count grows.
+
 ### Test Target
 
 - Test file: `tests/test_qdrant_service.py`

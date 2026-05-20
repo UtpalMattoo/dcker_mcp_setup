@@ -74,6 +74,8 @@ services:
       - "6333:6333"
     volumes:
       - vector-db-data:/qdrant/storage
+      - ../observability/runtime-logs/qdrant:/var/log/qdrant
+    command: sh -lc "mkdir -p /var/log/qdrant && /qdrant/qdrant 2>&1 | tee -a /var/log/qdrant/qdrant.log"
 
   ###############################################
   # New main starter service (replacing mcp_docker_server)
@@ -94,14 +96,21 @@ services:
       - QDRANT_HOST=qdrant-db
       - PYTHONPATH=/
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_EXPORTER_OTLP_INSECURE=true
       - OTEL_SERVICE_NAME=main_starter_service
       - OTEL_RESOURCE_ATTRIBUTES=service.name=main_starter_service,service.version=1.0
+      - SERVICE_LOG_FILE=/var/log/services/main_starter_service/app.log
     volumes:
       - ./main_starter_service:/main_starter_service
       - ./qdrant:/qdrant
       - ../.devcontainer/requirements.txt:/main_starter_service/requirements.txt
+      - ../observability/runtime-logs/main_starter_service:/var/log/services/main_starter_service
     working_dir: /main_starter_service
-    command: sh -c "pip install -r requirements.txt"
+    command: sh -c "pip install -r requirements.txt && python main_server.py"
 
   ###############################################
   # New second custom MCP work service 
@@ -118,12 +127,20 @@ services:
       - PYTHONUNBUFFERED=1
       - QDRANT_HOST=qdrant-db
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_EXPORTER_OTLP_INSECURE=true
       - OTEL_SERVICE_NAME=second-service-custom-mcp-work
       - OTEL_RESOURCE_ATTRIBUTES=service.name=second-service-custom-mcp-work,service.version=1.0
+      - SERVICE_LOG_FILE=/var/log/services/second-service-custom-mcp-work/app.log
     volumes:
       - ./second-service-custom-mcp-work:/second-service-custom-mcp-work
+      - ../.devcontainer/requirements.txt:/second-service-custom-mcp-work/requirements.txt
+      - ../observability/runtime-logs/second-service-custom-mcp-work:/var/log/services/second-service-custom-mcp-work
     working_dir: /second-service-custom-mcp-work
-    command: ["python", "python_custom_server.py"]
+    command: sh -c "pip install -r requirements.txt && python python_custom_server.py"
 
 ###############################################
 # Volumes for persistence

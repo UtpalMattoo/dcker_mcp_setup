@@ -8,10 +8,14 @@ loki.source.file "docker_app_logs" {
   // Instead of using docker.sock, we mount explicit paths
   
   targets = [{
-    __path__       = "/mnt/service-logs/*.log",
+    __path__       = "/mnt/service-logs/*/*.log",
     service_name   = "application",
     source_type    = "docker",
   }]
+
+  file_match {
+    enabled = true
+  }
 
   forward_to = [loki.process.app_redaction.receiver]
 }
@@ -97,10 +101,14 @@ loki.write "app_logs" {
 // Optional: Also read Qdrant logs if enabled
 loki.source.file "qdrant_logs" {
   targets = [{
-    __path__       = "/mnt/qdrant-logs/*.log",
+    __path__       = "/mnt/service-logs/qdrant/*.log",
     service_name   = "qdrant-db",
     source_type    = "docker",
   }]
+
+  file_match {
+    enabled = true
+  }
 
   forward_to = [loki.process.qdrant_redaction.receiver]
 }

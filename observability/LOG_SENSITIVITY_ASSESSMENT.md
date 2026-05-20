@@ -228,7 +228,7 @@ Define access controls for each log type:
 
 ## 6. Implementation Checklist
 
-- [ ] Define redaction patterns in Alloy config files (`observability/alloy/config/redaction-patterns.yml`)
+- [ ] Define redaction patterns in Alloy log pipeline files (`observability/alloy/config/logs-*.river`)
 - [ ] Add `loki.process` stages to each log pipeline with pattern replacements
 - [ ] Test redaction filters with synthetic logs containing secrets
 - [ ] Create validation tests to verify sensitive patterns do NOT appear in Loki

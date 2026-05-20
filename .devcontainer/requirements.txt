@@ -80,6 +80,10 @@ pydantic>=2.11.0,<3
 # Optional: Useful for modeling structured request/response objects
 # when interacting with microservices.
 
+opentelemetry-sdk==1.31.1
+opentelemetry-exporter-otlp-proto-grpc==1.31.1
+opentelemetry-api==1.31.1
+
 
 
 ###############################

@@ -1,13 +1,27 @@
 apiVersion: 1
 
 datasources:
-  # Loki datasource for logs
-  - name: Loki
+  # Loki datasource for development logs
+  - name: Loki-Dev
+    uid: loki-dev
     type: loki
     access: proxy
     url: http://lgtm:3100
     isDefault: false
-    editable: true
+    editable: false
+    version: 1
+    jsonData:
+      maxLines: 1000
+      derivedFields: []
+
+  # Loki datasource intended for restricted log dashboards
+  - name: Loki-Restricted
+    uid: loki-restricted
+    type: loki
+    access: proxy
+    url: http://lgtm:3100
+    isDefault: false
+    editable: false
     version: 1
     jsonData:
       maxLines: 1000
@@ -15,45 +29,49 @@ datasources:
 
   # Tempo datasource for traces
   - name: Tempo
+    uid: tempo
     type: tempo
     access: proxy
     url: http://lgtm:3100
     isDefault: false
-    editable: true
+    editable: false
     version: 1
     jsonData:
       nodeGraph:
         enabled: true
       tracesToLogs:
-        datasourceUid: loki
+        datasourceUid: loki-dev
 
   # Mimir datasource for metrics
   - name: Mimir
+    uid: mimir
     type: prometheus
     access: proxy
     url: http://lgtm:9009
     isDefault: true
-    editable: true
+    editable: false
     version: 1
     jsonData:
       timeInterval: 30s
 
   # Prometheus datasource (for compatibility)
   - name: Prometheus
+    uid: prometheus
     type: prometheus
     access: proxy
     url: http://lgtm:9090
     isDefault: false
-    editable: true
+    editable: false
     version: 1
     jsonData:
       timeInterval: 30s
 
   # OTLP datasource (if available)
   - name: OTLP
+    uid: otlp
     type: jaeger
     access: proxy
     url: http://lgtm:16686
     isDefault: false
-    editable: true
+    editable: false
     version: 1

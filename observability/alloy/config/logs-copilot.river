@@ -10,10 +10,14 @@ loki.source.file "copilot" {
   // This will be mounted as /mnt/copilot-logs in container
   
   targets = [{
-    __path__       = "/mnt/copilot-logs/*.log",
+    __path__       = "/mnt/copilot-logs/**/*.log",
     service_name   = "copilot",
     source_type    = "file",
   }]
+
+  file_match {
+    enabled = true
+  }
 
   forward_to = [loki.process.copilot_redaction.receiver]
 }

@@ -1,5 +1,11 @@
 # Reusable Prompt: Secure Alloy + LGTM Observability Architecture
 
+## Implementation Mapping
+
+For exact repository changes mapped to these requirements, see:
+
+- [IMPLEMENTATION_REQUIREMENT_MAPPING.md](IMPLEMENTATION_REQUIREMENT_MAPPING.md)
+
 ## Context
 
 Design a practical observability architecture using:
@@ -85,9 +91,10 @@ Create a complete observability setup where:
         │   └── dashboards/
         │       └── dashboards.yml
         ├── dashboards/
-        │   ├── qdrant-overview.json
-        │   ├── docker-overview.json
-        │   └── app-telemetry.json
+      │   ├── development/
+      │   │   └── .gitkeep
+      │   └── restricted/
+      │       └── .gitkeep
         └── env/
             └── grafana.env
 ```
