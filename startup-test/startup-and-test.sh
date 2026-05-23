@@ -1,4 +1,33 @@
 #!/usr/bin/env bash
+
+# Startup and integration test runner
+#
+# 1) Explicit test bypass controls (CLI flags)
+#    These options intentionally skip parts of the suite.
+#
+#    Scenario 1.1: Skip service tests
+#      bash startup-test/startup-and-test.sh --skip-service-tests
+#
+#    Scenario 1.2: Skip all observability tests (contracts + flow)
+#      bash startup-test/startup-and-test.sh --skip-observability-tests
+#
+#    Scenario 1.3: Skip observability flow tests only
+#      bash startup-test/startup-and-test.sh --skip-flow-tests
+#
+# 2) Conditional flow-test self-skips (runtime conditions)
+#    Flow tests may self-skip when dependencies are unreachable.
+#
+#    Scenario 2.1: Normal full run (no intentional skip)
+#      bash startup-test/startup-and-test.sh
+#
+#    Scenario 2.2: Force Alloy-unreachable condition for flow tests
+#      ALLOY_STATUS_URL=http://localhost:1/-/ready \
+#        bash startup-test/startup-and-test.sh
+#
+#    Scenario 2.3: Force Grafana/Loki query-unreachable condition for flow tests
+#      GRAFANA_URL=http://localhost:3999 \
+#        bash startup-test/startup-and-test.sh
+
 set -euo pipefail
 
 SKIP_SERVICE_TESTS=false
@@ -34,6 +63,9 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SERVICES_COMPOSE="${REPO_ROOT}/services/docker-compose.yml"
 OBS_COMPOSE="${REPO_ROOT}/observability/docker-compose.observability.yml"
 ENV_LOCAL="${REPO_ROOT}/.env.local"
+LOG_FILE="${SCRIPT_DIR}/startup-and-test.log"
+
+exec > >(tee -a "$LOG_FILE") 2> >(tee -a "$LOG_FILE" >&2)
 
 log() {
   echo ""

@@ -65,7 +65,9 @@ Create a complete observability setup where:
 ```text
 <REPO_ROOT>/
 ├── MICROVM_DEVCONTAINER_STEPS.md
+├── STARTUP_TEST.md
 ├── context_data/
+├── startup-test/
 ├── services/
 │   ├── docker-compose.yml
 │   ├── main_starter_service/
@@ -73,30 +75,35 @@ Create a complete observability setup where:
 │   └── second-service-custom-mcp-work/
 ├── tests/
 └── observability/
-    ├── docker-compose.observability.yml
-    ├── alloy/
-    │   ├── config/
-    │   │   ├── alloy.river
-    │   │   ├── logs-vscode.river
-    │   │   ├── logs-copilot.river
-    │   │   ├── logs-docker.river
-    │   │   ├── metrics-qdrant.river
-    │   │   └── traces-otlp.river
-    │   └── env/
-    │       └── alloy.env
-    └── grafana/
-        ├── provisioning/
-        │   ├── datasources/
-        │   │   └── datasources.yml
-        │   └── dashboards/
-        │       └── dashboards.yml
-        ├── dashboards/
+   ├── docker-compose.observability.yml
+   ├── alloy/
+   │   ├── config/
+   │   │   ├── runtime.river
+   │   │   ├── alloy.river
+   │   │   ├── logs-vscode.river
+   │   │   ├── logs-copilot.river
+   │   │   ├── logs-docker.river
+   │   │   ├── metrics-qdrant.river
+   │   │   └── traces-otlp.river
+   │   └── env/
+   │       └── alloy.env
+   ├── runtime-logs/
+   │   ├── main_starter_service/
+   │   ├── second-service-custom-mcp-work/
+   │   └── qdrant/
+   └── grafana/
+      ├── provisioning/
+      │   ├── datasources/
+      │   │   └── datasources.yml
+      │   └── dashboards/
+      │       └── dashboards.yml
+      ├── dashboards/
       │   ├── development/
       │   │   └── .gitkeep
       │   └── restricted/
       │       └── .gitkeep
-        └── env/
-            └── grafana.env
+      └── env/
+         └── grafana.env
 ```
 
 ---

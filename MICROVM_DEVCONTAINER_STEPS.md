@@ -30,29 +30,33 @@ Project layout:
 
 ```text
 dcker_mcp_setup/
-|-- .devcontainer/
-|   |-- devcontainer-lock.json
-|   |-- devcontainer.json
-|   |-- requirements.txt
-|   `-- setup.sh
-|-- .gitignore
-|-- .vscode/
-|   `-- settings.json
-|-- MICROVM_DEVCONTAINER_STEPS.md
-|-- services/
-|   |-- docker-compose.yml
-|   |-- main_starter_service/
-|   |   |-- main_server.py
-|   |   `-- requirements.txt
-|   |-- qdrant/
-|   |   |-- __init__.py
-|   |   `-- qdrant_service.py
-|   `-- second-service-custom-mcp-work/
-|       `-- python_custom_server.py
-`-- tests/
-   |-- test_qdrant_service.log
-   |-- test_qdrant_service.py
-   `-- test_qdrant_service.sh
+├── .devcontainer/
+│   ├── devcontainer-lock.json
+│   ├── devcontainer.json
+│   ├── requirements.txt
+│   └── setup.sh
+├── .gitignore
+├── .vscode/
+│   └── settings.json
+├── MICROVM_DEVCONTAINER_STEPS.md
+├── STARTUP_TEST.md
+├── startup-test/
+├── observability/
+├── services/
+│   ├── docker-compose.yml
+│   ├── main_starter_service/
+│   │   ├── main_server.py
+│   │   └── requirements.txt
+│   ├── qdrant/
+│   │   ├── __init__.py
+│   │   └── qdrant_service.py
+│   └── second-service-custom-mcp-work/
+│       └── python_custom_server.py
+└── tests/
+   ├── observability/
+   ├── test_qdrant_service.log
+   ├── test_qdrant_service.py
+   └── test_qdrant_service.sh
 ```
 
 
@@ -187,6 +191,10 @@ Use the repo-root `startup-test/` folder as the canonical startup and test workf
 - `startup-test/startup-and-test.sh` for full ordered startup + tests
 - `startup-test/startup-and-test-lite.sh` for fast contract checks
 - `startup-test/cleanup.sh` for teardown
+
+Simple summary: the contract checks confirm observability setup files include required services and safety rules.
+Technical definition: observability config contracts require expected compose wiring (`lgtm` + `alloy`, `OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317`, external `observability` network, no `docker.sock`) and required Alloy redaction/import rules in `observability/alloy/config/*.river`.
+Test type note: these are static file-content assertions, not runtime integration tests.
 
 Recommended from WSL shell:
 

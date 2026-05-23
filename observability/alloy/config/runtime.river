@@ -1,0 +1,31 @@
+// Minimal runtime Alloy config for local startup tests.
+
+loki.write "app_logs" {
+  endpoint {
+    url = "http://lgtm:3100/loki/api/v1/push"
+  }
+
+  external_labels = {
+    service     = "application",
+    environment = "local",
+  }
+}
+
+loki.source.file "docker_app_logs" {
+  targets = [{
+    __path__     = "/mnt/service-logs/*/*.log",
+    service_name = "application",
+    source_type  = "docker",
+  }]
+
+  file_match {
+    enabled = true
+  }
+
+  forward_to = [loki.write.app_logs.receiver]
+}
+
+logging {
+  level  = "info"
+  format = "json"
+}

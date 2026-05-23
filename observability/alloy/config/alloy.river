@@ -7,15 +7,6 @@ local.file "environment" {
   is_secret = false
 }
 
-// Shared variables from environment
-locals {
-  enable_vscode_logs  = env("ENABLE_VSCODE_LOGS") == "true"
-  enable_copilot_logs = env("ENABLE_COPILOT_LOGS") == "true"
-  enable_service_logs = env("ENABLE_SERVICE_LOGS") == "true"
-  enable_qdrant_logs  = env("ENABLE_QDRANT_LOGS") == "true"
-  redaction_mode      = env("REDACTION_MODE") == "strict"
-}
-
 // OTLP Traces receiver and processor
 import.file "traces_otlp" {
   filename = "/etc/alloy/traces-otlp.river"
@@ -45,10 +36,4 @@ import.file "logs_docker" {
 logging {
   level  = "info"
   format = "json"
-}
-
-// Server configuration
-server {
-  http_listen_addr = "0.0.0.0:12345"
-  http_path_prefix = "/"
 }

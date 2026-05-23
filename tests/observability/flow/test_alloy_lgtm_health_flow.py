@@ -4,13 +4,14 @@ import time
 import urllib.parse
 import urllib.error
 import urllib.request
+import base64
 import uuid
 from pathlib import Path
 
 import pytest
 
 
-ALLOY_STATUS_URL = os.getenv("ALLOY_STATUS_URL", "http://localhost:12345/api/v1/status")
+ALLOY_STATUS_URL = os.getenv("ALLOY_STATUS_URL", "http://localhost:12345/-/ready")
 LGTM_HEALTH_URL = os.getenv("LGTM_HEALTH_URL", "http://localhost:3000/api/health")
 GRAFANA_URL = os.getenv("GRAFANA_URL", "http://localhost:3000")
 GRAFANA_USER = os.getenv("GRAFANA_USER", "admin")
@@ -28,6 +29,12 @@ def _get_json(url: str, timeout: float = 3.0) -> dict:
     return json.loads(body)
 
 
+def _url_is_reachable(url: str, timeout: float = 3.0) -> bool:
+    request = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return 200 <= response.status < 300
+
+
 def _grafana_loki_query_range(expr: str, start_ns: int, end_ns: int, timeout: float = 5.0) -> dict:
     query = urllib.parse.urlencode(
         {
@@ -42,12 +49,10 @@ def _grafana_loki_query_range(expr: str, start_ns: int, end_ns: int, timeout: fl
         f"{GRAFANA_URL}/api/datasources/proxy/uid/{LOKI_DATASOURCE_UID}"
         f"/loki/api/v1/query_range?{query}"
     )
-    password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-    password_mgr.add_password(None, GRAFANA_URL, GRAFANA_USER, GRAFANA_PASSWORD)
-    auth_handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
-    opener = urllib.request.build_opener(auth_handler)
+    token = base64.b64encode(f"{GRAFANA_USER}:{GRAFANA_PASSWORD}".encode("utf-8")).decode("ascii")
     request = urllib.request.Request(url, method="GET")
-    with opener.open(request, timeout=timeout) as response:
+    request.add_header("Authorization", f"Basic {token}")
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         body = response.read().decode("utf-8")
     return json.loads(body)
 
@@ -65,13 +70,11 @@ def _extract_loki_lines(payload: dict) -> list[str]:
 @pytest.mark.flow
 def test_alloy_status_endpoint() -> None:
     try:
-        payload = _get_json(ALLOY_STATUS_URL)
+        reachable = _url_is_reachable(ALLOY_STATUS_URL)
     except (urllib.error.URLError, TimeoutError):
         pytest.skip("Alloy is not reachable. Start observability stack to run flow tests.")
 
-    assert isinstance(payload, dict)
-    # Alloy status payload shape can vary by version; keep contract minimal and stable.
-    assert len(payload) > 0
+    assert reachable
 
 
 @pytest.mark.flow
@@ -88,7 +91,8 @@ def test_lgtm_grafana_health_endpoint() -> None:
 @pytest.mark.flow
 def test_runtime_log_reaches_loki_via_alloy() -> None:
     try:
-        _get_json(ALLOY_STATUS_URL)
+        if not _url_is_reachable(ALLOY_STATUS_URL):
+            pytest.skip("Alloy is not reachable. Start observability stack to run flow tests.")
         _get_json(LGTM_HEALTH_URL)
     except (urllib.error.URLError, TimeoutError):
         pytest.skip("Alloy or LGTM is not reachable. Start observability stack to run flow tests.")

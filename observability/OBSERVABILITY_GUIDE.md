@@ -117,7 +117,9 @@ This creates a contract-driven observability model where services define the tel
 # 4. Project Layout
 
 ```text
-c:/Users/utpal/projects/sandboxing/dcker_mcp_setup/
+<REPO_ROOT>/
+├── STARTUP_TEST.md
+├── startup-test/
 ├── services/
 ├── observability/
 ├── tests/
@@ -170,6 +172,7 @@ observability/
 
 ```text
 alloy/config/
+├── runtime.river
 ├── alloy.river
 ├── logs-vscode.river
 ├── logs-copilot.river
@@ -177,6 +180,8 @@ alloy/config/
 ├── metrics-qdrant.river
 └── traces-otlp.river
 ```
+
+`runtime.river` is the current compose entrypoint loaded by Alloy at container startup.
 
 This structure separates telemetry pipelines by signal type instead of combining everything into one configuration file.
 

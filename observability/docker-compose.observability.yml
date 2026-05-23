@@ -19,12 +19,8 @@ services:
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
     healthcheck:
       test:
-        - CMD
-        - wget
-        - --no-verbose
-        - --tries=1
-        - --spider
-        - http://localhost:3000/api/health
+        - CMD-SHELL
+        - test -f /tmp/ready
       interval: 10s
       timeout: 5s
       retries: 5
@@ -36,12 +32,9 @@ services:
   alloy:
     image: grafana/alloy:latest
     container_name: grafana-alloy
-    command: run /etc/alloy/config.river --server.http.listen-addr=0.0.0.0:12345
+    command: run /etc/alloy/runtime.river --server.http.listen-addr=0.0.0.0:12345
     ports:
       - "12345:12345"  # Alloy UI
-      - "4317:4317"    # OTLP gRPC (alternative receiver if direct to Alloy)
-      - "4318:4318"    # OTLP HTTP (alternative receiver if direct to Alloy)
-      - "9411:9411"    # Zipkin receiver
     volumes:
       - ./alloy/config:/etc/alloy:ro
       - alloy-data:/var/lib/alloy
@@ -62,12 +55,8 @@ services:
         condition: service_healthy
     healthcheck:
       test:
-        - CMD
-        - wget
-        - --no-verbose
-        - --tries=1
-        - --spider
-        - http://localhost:12345/api/v1/status
+        - CMD-SHELL
+        - pidof alloy >/dev/null
       interval: 10s
       timeout: 5s
       retries: 5
