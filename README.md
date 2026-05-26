@@ -51,11 +51,11 @@ dcker_mcp_setup/
 
 ## Project Setup
 
-A reproducible local environment for developing and testing AI-agent workflows. It isolates development, services, and observability so each layer stays predictable and easy to reason about.
+A reproducible local environment for developing and testing AI-agent workflows. It isolates development, services, and observability.
 
 ## Why This Exists
 
-Local stacks often become messy when services, tools, and telemetry run together. This setup keeps boundaries explicit:
+Separating services, tools, and telemetry run together to keep boundaries explicit:
 
 - Development happens in a Dev Container inside WSL2
 - Service containers run separately on controlled shared networks
@@ -96,4 +96,4 @@ Services emit telemetry -> Alloy processes it -> LGTM stores and visualizes it.
 
 ## Status
 
-A working sandbox with clear upgrade paths for stronger health checks, richer dashboards, and additional service-onboarding contracts.
+Sandbox with upgrade paths for stronger health checks, dashboards, and service-onboarding contracts.
