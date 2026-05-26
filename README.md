@@ -1,4 +1,4 @@
-# Project Layout
+# dcker_mcp_setup
 
 ```text
 dcker_mcp_setup/
@@ -37,3 +37,63 @@ dcker_mcp_setup/
 ├── STARTUP_TEST.md
 └── README.md
 ```
+
+## Table of Contents
+
+1. [Project Setup](#project-setup)
+2. [Why This Exists](#why-this-exists)
+3. [What's Included](#whats-included)
+4. [Architecture](#architecture)
+5. [Security](#security)
+6. [Quick Start](#quick-start)
+7. [Who This Is For](#who-this-is-for)
+8. [Status](#status)
+
+## Project Setup
+
+A reproducible local environment for developing and testing AI-agent workflows. It isolates development, services, and observability so each layer stays predictable and easy to reason about.
+
+## Why This Exists
+
+Local stacks often become messy when services, tools, and telemetry run together. This setup keeps boundaries explicit:
+
+- Development happens in a Dev Container inside WSL2
+- Service containers run separately on controlled shared networks
+- Observability runs as its own stack (Alloy + LGTM)
+- Telemetry is contract-driven, not auto-scraped or privileged
+
+## What's Included
+
+- Local service stack with Qdrant and Python service placeholders
+- Observability stack for logs, metrics, and traces
+- Startup scripts enforcing deterministic bring-up order
+- Contract and flow tests for services and telemetry wiring
+- Documentation covering security, telemetry contracts, and runbooks
+
+## Architecture
+
+Services emit telemetry -> Alloy processes it -> LGTM stores and visualizes it.
+
+## Security
+
+- No Docker socket exposure to Alloy
+- Only explicit telemetry endpoints and mounts
+- Sensitive log redaction before Loki ingestion
+- Access-separated Grafana dashboards and log visibility
+
+## Quick Start
+
+1. Rebuild and reopen in the Dev Container (VS Code).
+2. Use startup script in startup-test.
+3. Validate service health, then observability health.
+4. Confirm logs, metrics, and traces in Grafana.
+
+## Users
+
+- Developers exploring agent-service patterns
+- Teams wanting safer local observability defaults
+- Developers building/experimenting with a reproducible startup, testing, and telemetry behavior 
+
+## Status
+
+A working sandbox with clear upgrade paths for stronger health checks, richer dashboards, and additional service-onboarding contracts.
