@@ -50,6 +50,7 @@ dcker_mcp_setup/
 8. [Quick Start](#quick-start)
 9. [Who This Is For](#who-this-is-for)
 10. [Status](#status)
+11. [Additonal](#Additional)
 
 ## Project Setup
 
@@ -198,3 +199,10 @@ Where visualization happens:
 ## Status
 
 Sandbox with upgrade paths for stronger health checks, dashboards, and service-onboarding contracts.
+
+## Additional?
+
+- Search using Qdrant as the vector database for semantic search, embedding storage, and the retrieval—needed for RAG‑style workflows.
+- Containerized and modular, should be easy to plug in additional AI components or swap services without disrupting the rest of the stack.
+- Observability set up through Grafana, Alloy, and LGTM, covering metrics, logs, and traces for AI‑related workloads.
+- Agent‑service pattern structure: small, focused services handle specific responsibilities and can be composed into more complex behaviors.
