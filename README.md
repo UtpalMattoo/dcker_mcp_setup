@@ -158,6 +158,11 @@ Separating services, tools, and telemetry run together to keep boundaries explic
 
 Services emit telemetry -> Alloy processes it -> LGTM stores and visualizes it.
 
+- Search using Qdrant as the vector database for semantic search, embedding storage, and retrieval—needed for RAG‑style workflows.
+- Containerized and modular, making it straightforward to plug in additional AI components or swap services without disrupting the rest of the stack.
+- Observability set up through Grafana, Alloy, and LGTM, covering metrics, logs, and traces for AI‑related workloads.
+- Agent‑service pattern structure: small, focused services handle specific responsibilities and can be composed into more complex behaviors.
+
 ## LGTM in This Project
 
 LGTM is the observability backend bundle used by this repo:
