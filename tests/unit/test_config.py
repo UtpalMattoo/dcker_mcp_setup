@@ -6,7 +6,7 @@ would run in different environments without changing real machine settings.
 
 import pytest
 
-from services.ai_pipeline.config import ConfigError, load_embedding_config, run_startup_health_checks
+from services.config import ConfigError, load_embedding_config, run_startup_health_checks
 
 
 def test_missing_provider_fails(monkeypatch):

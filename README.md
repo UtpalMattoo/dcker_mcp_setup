@@ -1,39 +1,69 @@
 # dcker_mcp_setup
 
+Project tree snapshot (source and docs only; generated artifacts like `.venv`, `.pytest_cache`, logs, and `__pycache__` are omitted):
+
 ```text
 dcker_mcp_setup/
 ├── .devcontainer/
 │   └── requirements.txt
-├── services/
-│   ├── docker-compose.yml
-│   ├── main_starter_service/
-│   │   └── main_server.py
-│   ├── qdrant/
-│   │   └── qdrant_service.py
-│   └── second-service-custom-mcp-work/
-│       └── python_custom_server.py
+├── context_data/
 ├── observability/
-│   ├── docker-compose.observability.yml
-│   ├── OBSERVABILITY_GUIDE.md
-│   ├── TELEMETRY_CONTRACTS.md
-│   ├── LOG_SENSITIVITY_ASSESSMENT.md
-│   ├── IMPLEMENTATION_REQUIREMENT_MAPPING.md
 │   ├── alloy/
-│   │   └── config/
+│   │   ├── config/
+│   │   └── env/
 │   ├── grafana/
-│   │   └── provisioning/
-│   └── runtime-logs/
+│   │   ├── dashboards/
+│   │   ├── env/
+│   │   ├── provisioning/
+│   │   └── rbac/
+│   ├── docker-compose.observability.yml
+│   ├── implementation_requirement_mapping.md
+│   ├── local_path_variables.md
+│   ├── log_sensitivity_assessment.md
+│   ├── observability_guide.md
+│   ├── secure_alloy_lgtm_observability_prompt.md
+│   └── telemetry_contracts.md
+├── services/
+│   ├── ai_pipeline/
+│   │   ├── embedding/
+│   │   │   ├── providers/
+│   │   │   │   ├── base.py
+│   │   │   │   ├── openai_provider.py
+│   │   │   │   └── sentence_transformers_provider.py
+│   │   │   └── service.py
+│   │   └── ingestion/
+│   │       └── service.py
+│   ├── main_starter_service/
+│   │   ├── main_server.py
+│   │   └── requirements.txt
+│   ├── qdrant/
+│   │   ├── preUpsert_embeddingCreation_.md
+│   │   └── qdrant_service.py
+│   ├── second-service-custom-mcp-work/
+│   │   ├── python_custom_server.py
+│   │   └── requirements.txt
+│   ├── config.py
+│   └── docker-compose.yml
 ├── startup-test/
-│   ├── startup-and-test.sh
-│   ├── startup-and-test-lite.sh
 │   ├── cleanup.sh
-│   └── README.md
+│   ├── README.md
+│   ├── startup-and-test-lite.sh
+│   └── startup-and-test.sh
 ├── tests/
+│   ├── observability/
+│   │   ├── contracts/
+│   │   └── flow/
+│   ├── unit/
+│   │   ├── conftest.py
+│   │   ├── test_cache_path_config.py
+│   │   ├── test_config.py
+│   │   ├── test_dimension_validation.py
+│   │   ├── test_embedding_service.py
+│   │   └── test_provider_factory.py
 │   ├── test_qdrant_service.py
-│   └── observability/
-│       ├── contracts/
-│       └── flow/
+│   └── test_qdrant_service.sh
 ├── MICROVM_DEVCONTAINER_STEPS.md
+├── pytest.ini
 ├── STARTUP_TEST.md
 └── README.md
 ```
@@ -45,11 +75,13 @@ dcker_mcp_setup/
 3. [Why This Exists](#why-this-exists)
 4. [What's Included](#whats-included)
 5. [Architecture](#architecture)
-6. [LGTM in This Project](#lgtm-in-this-project)
-7. [Security](#security)
-8. [Quick Start](#quick-start)
-9. [Who This Is For](#who-this-is-for)
-10. [Status](#status)
+6. [Embedding Roadmap (Phases)](#embedding-roadmap-phases)
+7. [Phase 1 Sequence Diagram](#phase-1-sequence-diagram)
+8. [LGTM in This Project](#lgtm-in-this-project)
+9. [Security](#security)
+10. [Quick Start](#quick-start)
+11. [Who This Is For](#who-this-is-for)
+12. [Status](#status)
 
 ## Project Setup
 
@@ -162,6 +194,101 @@ Services emit telemetry -> Alloy processes it -> LGTM stores and visualizes it.
 - Containerized and modular, making it straightforward to plug in additional AI components or swap services without disrupting the rest of the stack.
 - Observability set up through Grafana, Alloy, and LGTM, covering metrics, logs, and traces for AI‑related workloads.
 - Agent‑service pattern structure: small, focused services handle specific responsibilities and can be composed into more complex behaviors.
+
+## Embedding Roadmap (Phases)
+
+Source: services/qdrant/preUpsert_embeddingCreation_.md
+
+1. Phase 1 - Embedding foundation and configuration
+- Status: implemented
+- Provider abstraction, config validation, startup checks, normalized errors, and Qdrant safety checks.
+
+2. Phase 2 - Document processing pipeline
+- Status: planned
+- Add readers (txt, md, pdf, eml, mbox), chunking, and metadata schema.
+
+3. Phase 3 - Qdrant integration and persistence
+- Status: partially implemented
+- Expand collection lifecycle, persistence, and integration tests.
+
+4. Phase 4 - CLI-based ingestion
+- Status: planned
+- Add CLI args, validation, and progress output.
+
+5. Phase 5 - Gmail integration
+- Status: planned
+- Add OAuth ingestion, filters, metadata preservation, and incremental sync.
+
+6. Phase 6 - Search API
+- Status: planned
+- Add /search, metadata filtering, and health endpoints.
+
+7. Phase 7 - Frontend UI
+- Status: planned
+- Add upload flow, collection views, and semantic search UI.
+
+8. Phase 8 - Production readiness
+- Status: planned
+- Add KPI metrics, async ingestion, embedding cache, security, and backup/restore.
+
+## Phase 1 Sequence Diagram
+
+This shows what happens in Phase 1 when text is converted into an embedding and saved.
+
+```mermaid
+sequenceDiagram
+	participant App as App
+	participant Config as Config File
+	participant Health as Startup Checks
+	participant Embed as Embedding Service
+	participant Factory as Provider Factory
+	participant Provider as Chosen Provider
+	participant Ingest as Ingestion Service
+	participant DB as Qdrant Database
+
+	App->>Config: Load settings
+	Config->>Config: Read provider + model
+	Config->>Config: Read expected vector size
+	Config->>Config: Validate provider + model + dimensions
+	Config-->>App: Return valid config
+
+	App->>Health: Run startup checks
+	Health->>Health: Check local packages (if needed)
+	Health->>Health: Check cache folder can be written
+	Health-->>App: Ready or stop with error
+
+	App->>Embed: Start embedding service
+	Embed->>Factory: Build configured provider
+	Factory->>Factory: No automatic fallback
+	Factory->>Provider: Create selected provider
+	Provider-->>Embed: Provider ready
+
+	App->>Ingest: Send text to ingest
+	Ingest->>Embed: Ask for embedding
+	Embed->>Provider: Create vector from text
+	Provider->>Provider: Retry transient OpenAI failures
+	Provider-->>Embed: Return vector
+	Embed->>Embed: Check vector size is correct
+	Embed-->>Ingest: Return checked vector
+
+	Ingest->>DB: Save vector + metadata
+	DB->>DB: Create collection if missing
+	DB->>DB: Check vector size before save
+	DB-->>Ingest: Saved
+	Ingest-->>App: Done
+
+	Note over Provider,Embed: Provider failures are normalized as EmbeddingProviderError
+```
+
+1. The app reads settings (provider, model, and dimensions).
+2. The app runs startup checks so problems are caught early.
+3. The provider factory builds only the configured provider (no fallback).
+4. The text is turned into a vector.
+5. Transient OpenAI errors are retried.
+6. The vector size is checked to avoid bad data.
+7. The vector is saved in Qdrant.
+
+If anything fails, the process stops with a clear error instead of silently continuing.
 
 ## LGTM in This Project
 

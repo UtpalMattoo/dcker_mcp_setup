@@ -1,6 +1,6 @@
 # Observability Implementation Requirement Mapping
 
-Source prompt: [Secure Alloy + LGTM Observability Prompt.md](Secure Alloy + LGTM Observability Prompt.md)
+Source prompt: [secure_alloy_lgtm_observability_prompt.md](secure_alloy_lgtm_observability_prompt.md)
 
 Purpose: map requirements from Secure Alloy + LGTM prompt to exact repository changes applied in this implementation pass.
 
@@ -155,7 +155,7 @@ Checks executed:
 - observability/grafana/rbac/bootstrap-rbac.sh
 - observability/grafana/dashboards/development/.gitkeep
 - observability/grafana/dashboards/restricted/.gitkeep
-- observability/Secure Alloy + LGTM Observability Prompt.md
+- observability/secure_alloy_lgtm_observability_prompt.md
 - observability/runtime-logs/.gitkeep
 - observability/runtime-logs/main_starter_service/.gitkeep
 - observability/runtime-logs/second-service-custom-mcp-work/.gitkeep

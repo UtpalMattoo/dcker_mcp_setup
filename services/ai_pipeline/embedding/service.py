@@ -7,7 +7,7 @@ dimension checks before data is passed to ingestion/Qdrant.
 
 from typing import Callable, Dict
 
-from services.ai_pipeline.config import ConfigError, EmbeddingConfig, load_embedding_config
+from services.config import ConfigError, EmbeddingConfig, load_embedding_config
 from services.ai_pipeline.embedding.providers.base import EmbeddingProvider
 from services.ai_pipeline.embedding.providers.openai_provider import OpenAIEmbeddingProvider
 from services.ai_pipeline.embedding.providers.sentence_transformers_provider import (

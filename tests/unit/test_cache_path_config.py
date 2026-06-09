@@ -5,7 +5,7 @@ We use temporary folders so tests do not touch real cache directories.
 
 from pathlib import Path
 
-from services.ai_pipeline.config import load_embedding_config, run_startup_health_checks
+from services.config import load_embedding_config, run_startup_health_checks
 
 
 def test_cache_path_from_env(monkeypatch, tmp_path):

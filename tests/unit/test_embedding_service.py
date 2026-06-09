@@ -6,7 +6,7 @@ real model/API calls.
 
 import pytest
 
-from services.ai_pipeline.config import EmbeddingConfig
+from services.config import EmbeddingConfig
 from services.ai_pipeline.embedding.service import EmbeddingService
 
 

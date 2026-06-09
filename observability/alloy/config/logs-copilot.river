@@ -5,7 +5,7 @@
 // This module applies strict redaction patterns
 
 loki.source.file "copilot" {
-  // Path should be set via LOCAL_PATH_VARIABLES.md
+  // Path should be set via local_path_variables.md
   // For Windows: typically %APPDATA%\Code\User\globalStorage\GitHub.copilot\...
   // This will be mounted as /mnt/copilot-logs in container
   

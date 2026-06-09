@@ -9,7 +9,7 @@ local.file "vscode_enabled" {
 }
 
 loki.source.file "vscode" {
-  // Path should be set via LOCAL_PATH_VARIABLES.md
+  // Path should be set via local_path_variables.md
   // For Windows: typically %APPDATA%\Code\logs\*.log
   // This will be mounted as /mnt/vscode-logs in container
   

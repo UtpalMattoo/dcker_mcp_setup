@@ -21,11 +21,10 @@ Goal:
 Active code paths:
 - services/qdrant/qdrant_service.py
 - services/config.py
-- services/embedding_service.py
-- services/ingestion_service.py
+- services/ai_pipeline/embedding/service.py
+- services/ai_pipeline/ingestion/service.py
 
 Internal Phase 1 modules:
-- services/ai_pipeline/config.py
 - services/ai_pipeline/embedding/service.py
 - services/ai_pipeline/embedding/providers/
 - services/ai_pipeline/ingestion/service.py
@@ -35,8 +34,7 @@ Test folder:
 
 Keep this structure for now:
 - Use one active Qdrant service at services/qdrant/qdrant_service.py.
-- Keep top-level services/config.py, services/embedding_service.py, and services/ingestion_service.py as compatibility entry points.
-- Move fully to services/ai_pipeline/* in a later refactor.
+- Keep services/config.py as the single config module.
 
 Phase 1 scope:
 1) Embedding service with one method: embed_text(text).

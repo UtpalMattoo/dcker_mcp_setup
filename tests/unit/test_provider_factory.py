@@ -5,7 +5,7 @@ These tests reset the registry so test order does not affect outcomes.
 
 import pytest
 
-from services.ai_pipeline.config import EmbeddingConfig
+from services.config import EmbeddingConfig
 from services.ai_pipeline.embedding.providers.base import EmbeddingProvider
 from services.ai_pipeline.embedding.service import (
     build_provider,
