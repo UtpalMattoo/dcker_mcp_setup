@@ -15,42 +15,60 @@
 
 ### Phase 1 — Embedding Foundation and Configuration
 
-Code layout target:
-- services/qdrant_service.py
+Goal:
+- Build a clean embedding base with config-driven provider selection.
+
+Active code paths:
+- services/qdrant/qdrant_service.py
+- services/config.py
 - services/embedding_service.py
 - services/ingestion_service.py
 
-Responsibilities:
-- qdrant_service.py: create_collection, upsert, search, delete, get_collection_stats
-- embedding_service.py: embed_text, provider selection, model selection
-- ingestion_service.py: read file, chunk document, call embed_text, call qdrant_service.upsert
+Internal Phase 1 modules:
+- services/ai_pipeline/config.py
+- services/ai_pipeline/embedding/service.py
+- services/ai_pipeline/embedding/providers/
+- services/ai_pipeline/ingestion/service.py
 
-Design constraint:
-- Do not put file parsing + embedding orchestration logic into qdrant_service.py.
-- qdrant_service.py should focus on Qdrant operations.
+Test folder:
+- tests/unit
 
-Phase 1 requirements:
-1) Embedding Service abstraction with provider-agnostic embed_text(text).
-2) Providers: OpenAI embeddings + local Sentence Transformers behind common interface.
-3) Centralized config module with:
-   - embedding_provider
-   - embedding_model
-   - embedding_dimensions
-   - api_key references
-4) Runtime provider switching through configuration only.
-5) Startup validation:
-   - unsupported providers
-   - missing API keys
-6) Unit tests for:
-   - embed_text
-   - provider selection
-   - config loading
-   - error handling
+Keep this structure for now:
+- Use one active Qdrant service at services/qdrant/qdrant_service.py.
+- Keep top-level services/config.py, services/embedding_service.py, and services/ingestion_service.py as compatibility entry points.
+- Move fully to services/ai_pipeline/* in a later refactor.
+
+Phase 1 scope:
+1) Embedding service with one method: embed_text(text).
+2) Two providers behind one interface:
+   - openai
+   - sentence_transformers
+3) Config-driven switch only. No auto fallback provider.
+4) Config checks:
+   - valid provider
+   - valid model for provider
+   - valid dimensions
+   - required API key for openai
+5) Startup health checks (separate from config load):
+   - local runtime dependency check
+   - cache path write check
+6) Provider reliability:
+   - retry transient OpenAI failures
+   - normalized provider error type
+7) Qdrant safety:
+   - collection create if missing
+   - vector dimension check before write/search
+8) Ingestion stays thin:
+   - embed text
+   - upsert to Qdrant
 
 Acceptance criteria:
-- embed_text works for all supported providers.
-- Provider switch is config-only.
-- Unit tests pass.
+- Provider is selected by config only.
+- Provider must be set explicitly.
+- Vector size is validated before Qdrant operations.
+- Local cache path is persistent and writable.
+- Provider failures return normalized errors.
+- Phase 1 unit tests pass.
 
 ### Phase 2 — Document Processing Pipeline
 
