@@ -254,12 +254,12 @@ sequenceDiagram
 
 	App->>Health: Run startup checks
 	Health->>Health: Check local packages (if needed)
-	Health->>Health: Check cache folder can be written
+	Health->>Health: Check local directory storing model files is writable/accessible
 	Health-->>App: Ready or stop with error
 
 	App->>Embed: Start embedding service
 	Embed->>Factory: Build configured provider
-	Factory->>Factory: No automatic fallback
+	Factory->>Factory: No automatic fallback (get exactly the provider configured)
 	Factory->>Provider: Create selected provider
 	Provider-->>Embed: Provider ready
 
