@@ -34,14 +34,12 @@ dcker_mcp_setup/
 │   │   └── ingestion/
 │   │       └── service.py
 │   ├── main_starter_service/
-│   │   ├── main_server.py
-│   │   └── requirements.txt
+│   │   └── main_server.py
 │   ├── qdrant/
 │   │   ├── preUpsert_embeddingCreation_.md
 │   │   └── qdrant_service.py
 │   ├── second-service-custom-mcp-work/
-│   │   ├── python_custom_server.py
-│   │   └── requirements.txt
+│   │   └── python_custom_server.py
 │   ├── config.py
 │   └── docker-compose.yml
 ├── startup-test/
