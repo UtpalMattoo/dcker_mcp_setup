@@ -135,9 +135,15 @@ graph TD
 		end
 
 		subgraph Services[services/docker-compose.yml]
-			Qdrant[qdrant-db]
-			Main[main_starter_service]
-			Second[second-service-custom-mcp-work]
+			subgraph Orchestrator["Main Starter Service (App)"]
+				Main[main_starter_service]
+			end
+			subgraph Dependencies["Downstream Runtime Dependencies"]
+				Qdrant[qdrant-db]
+			end
+			subgraph PeerServices["Peer Services (Not Orchestrated by Main)"]
+				Second[second-service-custom-mcp-work]
+			end
 		end
 
 		subgraph Observability[observability/docker-compose.observability.yml]
@@ -157,6 +163,7 @@ graph TD
 	InnerDocker -- creates/starts --> Alloy
 	InnerDocker -- creates/starts --> LGTM
 	InnerDocker -- creates/starts --> Grafana
+	Main -- triggers upsert workflow --> Qdrant
 	Main -- OTLP/logs --> Alloy
 	Second -- OTLP/logs --> Alloy
 	Qdrant -- metrics/logs --> Alloy
@@ -235,7 +242,7 @@ This shows what happens in Phase 1 when text is converted into an embedding and 
 
 ```mermaid
 sequenceDiagram
-	participant App as App
+	participant App as "Main Starter Service (App)"
 	participant Config as Config File
 	participant Health as Startup Checks
 	participant Embed as Embedding Service
