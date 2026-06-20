@@ -95,10 +95,6 @@ services:
       - PYTHONUNBUFFERED=1
       - QDRANT_HOST=qdrant-db
       - PYTHONPATH=/
-      - EMBEDDING_PROVIDER=sentence_transformers
-      - EMBEDDING_MODEL=all-MiniLM-L6-v2
-      - HF_HOME=/cache/huggingface
-      - TRANSFORMERS_CACHE=/cache/huggingface
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
@@ -113,7 +109,6 @@ services:
       - ./qdrant:/qdrant
       - ../.devcontainer/requirements.txt:/main_starter_service/requirements.txt
       - ../observability/runtime-logs/main_starter_service:/var/log/services/main_starter_service
-      - hf-model-cache:/cache/huggingface
     working_dir: /main_starter_service
     command: sh -c "pip install -r requirements.txt && python main_server.py"
 
@@ -131,10 +126,6 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - QDRANT_HOST=qdrant-db
-      - EMBEDDING_PROVIDER=sentence_transformers
-      - EMBEDDING_MODEL=all-MiniLM-L6-v2
-      - HF_HOME=/cache/huggingface
-      - TRANSFORMERS_CACHE=/cache/huggingface
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
@@ -148,7 +139,6 @@ services:
       - ./second-service-custom-mcp-work:/second-service-custom-mcp-work
       - ../.devcontainer/requirements.txt:/second-service-custom-mcp-work/requirements.txt
       - ../observability/runtime-logs/second-service-custom-mcp-work:/var/log/services/second-service-custom-mcp-work
-      - hf-model-cache:/cache/huggingface
     working_dir: /second-service-custom-mcp-work
     command: sh -c "pip install -r requirements.txt && python python_custom_server.py"
 
@@ -157,4 +147,3 @@ services:
 ###############################################
 volumes:
   vector-db-data:
-  hf-model-cache:

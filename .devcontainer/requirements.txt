@@ -90,19 +90,20 @@ opentelemetry-api==1.31.1
 # GOOGLE CLOUD SUPPORT
 ###############################
 
-google-auth==2.39.0
+# Devcontainer does not use GCP services (might still use containerized GCP code)
+# google-auth==2.39.0
 # Recommended: Core Google Cloud authentication for ADC and service accounts.
 
-google-cloud-storage==2.19.0
+# google-cloud-storage==2.19.0
 # Optional: Needed if your agent reads or writes files in GCS.
 
-google-cloud-secret-manager==2.23.1
+# google-cloud-secret-manager==2.23.1
 # Optional: Needed if your agent retrieves secrets from Google Secret Manager.
 
-google-cloud-bigquery==3.31.0
+# google-cloud-bigquery==3.31.0
 # Optional: Needed if your agent queries or writes BigQuery tables.
 
-google-cloud-aiplatform==1.89.0
+# google-cloud-aiplatform==1.89.0
 # Optional: Needed for Vertex AI integrations on Google Cloud.
 
 

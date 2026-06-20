@@ -144,7 +144,7 @@ The documentation and comments are clear, but make sure the actual setup.sh and 
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-toolsai.jupyter",
-        "GoogleCloudTools.cloudcode",
+        //"GoogleCloudTools.cloudcode", no extension needed as Google CLI not used
         // Docker MCP Toolkit Mode (optional, for microservice debugging)
         "ms-azuretools.vscode-docker",
         "humao.rest-client"
@@ -160,10 +160,10 @@ The documentation and comments are clear, but make sure the actual setup.sh and 
   // -------------------------------------------------------------------
   // Applies to both MCP SDK and Docker MCP Toolkit modes.
   "forwardPorts": [
-    3000,
+    //3000, //Node.js removed from devcontainer setup
     5000,
-    8000,
-    8080
+    8000
+    //8080 //Google CLI removed from devcontainer setup
   ]
   // -------------------------------------------------------------------
   // WORKSPACE MOUNTING (Optional)
