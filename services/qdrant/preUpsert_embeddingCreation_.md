@@ -19,10 +19,10 @@ Goal:
 - Build a clean embedding base with config-driven provider selection.
 
 Active code paths:
-- services/qdrant/qdrant_service.py
-- services/config.py
-- services/ai_pipeline/embedding/service.py
-- services/ai_pipeline/ingestion/service.py
+- services/qdrant/qdrant_service.py (talks to qdrant)   
+- services/config.py (central configuration, rather than reading environment variables throughout the codebase)
+- services/ai_pipeline/embedding/service.py (main embedding interface)
+- services/ai_pipeline/ingestion/service.py (sends embedded text into Qdrant)
 
 Internal Phase 1 modules:
 - services/ai_pipeline/embedding/service.py
@@ -32,15 +32,60 @@ Internal Phase 1 modules:
 Test folder:
 - tests/unit
 
+Phase 1 directory tree (current implementation):
+
+```text
+services/
+├── config.py
+│   └── Embedding config and model dimensions.
+├── qdrant/
+│   ├── qdrant_service.py
+│   │   └── Qdrant collection, upsert, and search logic.
+│   └── preUpsert_embeddingCreation_.md
+│       └── Phase plan and acceptance criteria.
+└── ai_pipeline/
+   ├── embedding/
+   │   ├── service.py
+   │   │   └── Provider registry and embed_text service layer.
+   │   └── providers/
+   │       ├── base.py
+   │       │   └── Base provider interface and common error type.
+   │       ├── openai_provider.py
+   │       │   └── OpenAI embeddings with retry.
+   │       ├── sentence_transformers_provider.py
+   │       │   └── Local sentence-transformers embeddings.
+   │       └── precomputed_provider.py
+   │           └── Precomputed embeddings from Hugging Face dataset.
+   └── ingestion/
+      └── service.py
+         └── Ingest flow: embed text and upsert.
+
+tests/
+└── unit/
+   ├── test_config.py
+   │   └── Config validation tests.
+   ├── test_embedding_service.py
+   │   └── Embedding service behavior tests.
+   ├── test_provider_factory.py
+   │   └── Provider registry and factory tests.
+   ├── test_precomputed_provider.py
+   │   └── Precomputed provider lookup tests.
+   ├── test_dimension_validation.py
+   │   └── Dimension validation tests.
+   └── test_cache_path_config.py
+      └── Cache path and startup check tests.
+```
+
 Keep this structure for now:
 - Use one active Qdrant service at services/qdrant/qdrant_service.py.
 - Keep services/config.py as the single config module.
 
 Phase 1 scope:
 1) Embedding service with one method: embed_text(text).
-2) Two providers behind one interface:
+2) Three providers behind one interface:
    - openai
    - sentence_transformers
+   - precomputed (Hugging Face dataset-backed)
 3) Config-driven switch only. No auto fallback provider.
 4) Config checks:
    - valid provider

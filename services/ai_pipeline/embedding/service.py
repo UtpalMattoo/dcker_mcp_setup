@@ -10,6 +10,9 @@ from typing import Callable, Dict
 from services.config import ConfigError, EmbeddingConfig, load_embedding_config
 from services.ai_pipeline.embedding.providers.base import EmbeddingProvider
 from services.ai_pipeline.embedding.providers.openai_provider import OpenAIEmbeddingProvider
+from services.ai_pipeline.embedding.providers.precomputed_provider import (
+    PrecomputedDatasetEmbeddingProvider,
+)
 from services.ai_pipeline.embedding.providers.sentence_transformers_provider import (
     SentenceTransformersEmbeddingProvider,
 )
@@ -29,9 +32,21 @@ def _build_sentence_provider(config: EmbeddingConfig) -> EmbeddingProvider:
     return SentenceTransformersEmbeddingProvider(model=config.model, cache_dir=config.hf_cache_dir)
 
 
+def _build_precomputed_provider(config: EmbeddingConfig) -> EmbeddingProvider:
+    """Build dataset-backed provider for precomputed embeddings."""
+    return PrecomputedDatasetEmbeddingProvider(
+        model=config.model,
+        expected_dimensions=config.dimensions,
+        dataset_name=config.hf_dataset_name,
+        split=config.hf_dataset_split,
+        cache_dir=config.hf_cache_dir,
+    )
+
+
 _PROVIDER_REGISTRY: Dict[str, ProviderBuilder] = {
     "openai": _build_openai_provider,
     "sentence_transformers": _build_sentence_provider,
+    "precomputed": _build_precomputed_provider,
 }
 _PROVIDER_REGISTRY_LOCKED = False
 
@@ -55,6 +70,7 @@ def reset_provider_registry() -> None:
         {
             "openai": _build_openai_provider,
             "sentence_transformers": _build_sentence_provider,
+            "precomputed": _build_precomputed_provider,
         }
     )
     _PROVIDER_REGISTRY_LOCKED = False

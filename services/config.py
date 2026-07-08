@@ -25,6 +25,9 @@ PROVIDER_MODEL_DIMENSIONS: Dict[str, Dict[str, int]] = {
 		"all-MiniLM-L6-v2": 384,
 		"all-mpnet-base-v2": 768,
 	},
+	"precomputed": {
+		"qdrant-dbpedia-entities-100k-openai-1536": 1536,
+	},
 }
 
 
@@ -35,6 +38,8 @@ class EmbeddingConfig:
 	dimensions: int
 	openai_api_key: str | None = None
 	hf_cache_dir: str = "/cache/huggingface"
+	hf_dataset_name: str = "Qdrant/dbpedia-entities-100k"
+	hf_dataset_split: str = "train"
 
 
 def _validate_cache_dir(path_value: str) -> None:
@@ -94,6 +99,8 @@ def load_embedding_config(validate_runtime: bool = True) -> EmbeddingConfig:
 
 	openai_api_key = os.getenv("OPENAI_API_KEY")
 	hf_cache_dir = os.getenv("HF_HOME", "/cache/huggingface")
+	hf_dataset_name = os.getenv("HF_DATASET_NAME", "Qdrant/dbpedia-entities-100k")
+	hf_dataset_split = os.getenv("HF_DATASET_SPLIT", "train")
 
 	if provider == "openai" and not openai_api_key:
 		raise ConfigError("OPENAI_API_KEY is required when EMBEDDING_PROVIDER=openai")
@@ -107,6 +114,8 @@ def load_embedding_config(validate_runtime: bool = True) -> EmbeddingConfig:
 		dimensions=derived_dimensions,
 		openai_api_key=openai_api_key,
 		hf_cache_dir=hf_cache_dir,
+		hf_dataset_name=hf_dataset_name,
+		hf_dataset_split=hf_dataset_split,
 	)
 
 

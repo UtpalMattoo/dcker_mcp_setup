@@ -3,6 +3,9 @@
 These tests reset the registry so test order does not affect outcomes.
 """
 
+import sys
+import types
+
 import pytest
 
 from services.config import EmbeddingConfig
@@ -38,3 +41,31 @@ def test_build_provider_fails_for_unknown_provider():
     config = EmbeddingConfig(provider="not_registered", model="x", dimensions=2)
     with pytest.raises(ValueError):
         build_provider(config)
+
+
+def test_build_provider_accepts_precomputed_key_when_registered_defaults_loaded():
+    """Default registry should include the precomputed provider key."""
+    reset_provider_registry()
+    fake_module = types.SimpleNamespace(
+        load_dataset=lambda path, split, cache_dir: [
+            {
+                "text": "hello",
+                "embedding": [0.1] * 1536,
+            }
+        ]
+    )
+    previous = sys.modules.get("datasets")
+    sys.modules["datasets"] = fake_module
+    config = EmbeddingConfig(
+        provider="precomputed",
+        model="qdrant-dbpedia-entities-100k-openai-1536",
+        dimensions=1536,
+    )
+    try:
+        provider = build_provider(config)
+        assert provider.embed_text("hello")
+    finally:
+        if previous is None:
+            del sys.modules["datasets"]
+        else:
+            sys.modules["datasets"] = previous

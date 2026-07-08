@@ -61,3 +61,18 @@ def test_startup_health_check_writable_cache(monkeypatch, tmp_path):
     config = load_embedding_config(validate_runtime=False)
 
     run_startup_health_checks(config, check_runtime=False)
+
+
+def test_load_precomputed_config_defaults(monkeypatch):
+    """Precomputed provider loads expected defaults."""
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "precomputed")
+    monkeypatch.delenv("EMBEDDING_MODEL", raising=False)
+    monkeypatch.delenv("HF_DATASET_NAME", raising=False)
+    monkeypatch.delenv("HF_DATASET_SPLIT", raising=False)
+
+    config = load_embedding_config(validate_runtime=False)
+    assert config.provider == "precomputed"
+    assert config.model == "qdrant-dbpedia-entities-100k-openai-1536"
+    assert config.dimensions == 1536
+    assert config.hf_dataset_name == "Qdrant/dbpedia-entities-100k"
+    assert config.hf_dataset_split == "train"
