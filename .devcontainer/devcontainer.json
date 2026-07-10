@@ -121,7 +121,8 @@ The documentation and comments are clear, but make sure the actual setup.sh and 
   // The container joins the 'mcp-net' Docker network for isolation.
   // To allow host Docker access, uncomment the Docker socket mount below.
   "runArgs": [
-    "--network=mcp-net"
+    "--network=mcp-net",
+    "--add-host=host.docker.internal:host-gateway"
     // "-v",
     // "/var/run/docker.sock:/var/run/docker.sock" // Uncomment for Docker MCP Toolkit mode
   ],
@@ -161,6 +162,7 @@ The documentation and comments are clear, but make sure the actual setup.sh and 
   // Applies to both MCP SDK and Docker MCP Toolkit modes.
   "forwardPorts": [
     //3000, //Node.js removed from devcontainer setup
+    6333,
     5000,
     8000
     //8080 //Google CLI removed from devcontainer setup

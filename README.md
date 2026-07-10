@@ -125,7 +125,7 @@ Detailed runtime view:
 graph TD
 	subgraph Host[Windows Host]
 		VSCode[VS Code]
-		DockerDesktop[Docker Desktop]
+		DockerDesktop[Docker Desktop persistent Qdrant]
 	end
 
 	subgraph WSL2[WSL2 MicroVM]
@@ -139,7 +139,7 @@ graph TD
 				Main[main_starter_service]
 			end
 			subgraph Dependencies["Downstream Runtime Dependencies"]
-				Qdrant[qdrant-db]
+				Qdrant[qdrant-db optional points to host]
 			end
 			subgraph PeerServices["Peer Services (Not Orchestrated by Main)"]
 				Second[second-service-custom-mcp-work]
@@ -157,13 +157,13 @@ graph TD
 	VSCode --> Shell
 	DockerDesktop --> WSL2
 	Shell -- docker compose / docker CLI --> InnerDocker
-	InnerDocker -- creates/starts --> Qdrant
+	InnerDocker -. optional profile inner-qdrant .-> Qdrant
 	InnerDocker -- creates/starts --> Main
 	InnerDocker -- creates/starts --> Second
 	InnerDocker -- creates/starts --> Alloy
 	InnerDocker -- creates/starts --> LGTM
 	InnerDocker -- creates/starts --> Grafana
-	Main -- triggers upsert workflow --> Qdrant
+	Main -- QDRANT_HOST=host.docker.internal --> Qdrant
 	Main -- OTLP/logs --> Alloy
 	Second -- OTLP/logs --> Alloy
 	Qdrant -- metrics/logs --> Alloy
@@ -326,6 +326,24 @@ Where visualization happens:
 3. Validate service health, then observability health.
 4. Confirm logs, metrics, and traces in Grafana.
 
+## Shared Qdrant Mode
+
+Default behavior uses a host-level persistent Qdrant endpoint so both local runs and Dev Container runs can query the same vector store.
+
+- App services now resolve Qdrant via `QDRANT_HOST` and default to `host.docker.internal`.
+- Start host-level Qdrant once (outside inner DinD) and keep it running for shared persistence.
+- Optional inner Qdrant remains available behind compose profile `inner-qdrant`.
+
+Examples:
+
+```bash
+# Use host-level Qdrant (default path)
+docker compose -f services/docker-compose.yml up -d main_starter_service second-service-custom-mcp-work
+
+# Optional inner Qdrant (only when explicitly needed)
+docker compose -f services/docker-compose.yml --profile inner-qdrant up -d qdrant-db
+```
+
 ## Who This Is For
 
 - Developers exploring agent-service patterns
@@ -335,3 +353,4 @@ Where visualization happens:
 ## Status
 
 Sandbox with upgrade paths for stronger health checks, dashboards, and service-onboarding contracts.
+

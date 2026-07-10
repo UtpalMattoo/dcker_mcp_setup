@@ -173,6 +173,8 @@ Acceptance criteria:
 
 Implement Qdrant integration and persistent vector storage.
 
+Prerequisites: host-level Qdrant running on port 6333.
+
 Requirements:
 
 1) Qdrant Service
@@ -493,13 +495,28 @@ Each reader must output a common Document object containing:
 * document content
 * source metadata
 
-All downstream processing must be shared:
+All downstream processing must be shared.
 
-Document
-→ Chunker
-→ Metadata Generator
-→ EmbeddingService
-→ QdrantService
+```mermaid
+flowchart LR
+   subgraph DEV[Dev Container Services]
+      SRC[Document Sources\ntxt/md/pdf/eml/mbox/Gmail]
+      CH[Chunker]
+      MG[Metadata Generator]
+      ES[EmbeddingService]
+      QS[QdrantService]
+      SRC --> CH --> MG --> ES --> QS
+   end
+
+   subgraph HOST[Host Runtime]
+      HR[Host RAG Retrieval / Local Runs]
+   end
+
+   HQ[(Host-Level Qdrant\nPersistent Volume\n:6333)]
+
+   QS -->|QDRANT_HOST=host.docker.internal| HQ
+   HR -->|localhost:6333| HQ
+```
 
 Gmail ingestion must reuse the existing chunking, embedding, metadata creation, duplicate detection, and Qdrant insertion logic.
 

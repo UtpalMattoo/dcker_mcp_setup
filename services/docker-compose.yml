@@ -59,13 +59,20 @@ networks:
 
 services:
   ###############################################
-  # Qdrant service for vector search
+  # Optional inner Qdrant service for vector search
+  #
+  # Default mode uses a host-level persistent Qdrant instance so
+  # local runs and Dev Container runs can share one store.
+  # Start this service only when explicitly requested:
+  #   docker compose --profile inner-qdrant up -d qdrant-db
   ###############################################
   
   qdrant-db:
     # Start a container that runs the Qdrant server
     image: docker.io/qdrant/qdrant:latest
     container_name: qdrant-db
+    profiles:
+      - inner-qdrant
     restart: unless-stopped
     networks:
       - mcp-net
@@ -93,7 +100,7 @@ services:
       - observability
     environment:
       - PYTHONUNBUFFERED=1
-      - QDRANT_HOST=qdrant-db
+      - QDRANT_HOST=${QDRANT_HOST:-host.docker.internal}
       - PYTHONPATH=/
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
@@ -104,6 +111,8 @@ services:
       - OTEL_SERVICE_NAME=main_starter_service
       - OTEL_RESOURCE_ATTRIBUTES=service.name=main_starter_service,service.version=1.0
       - SERVICE_LOG_FILE=/var/log/services/main_starter_service/app.log
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./main_starter_service:/main_starter_service
       - ./qdrant:/qdrant
@@ -125,7 +134,7 @@ services:
       - observability
     environment:
       - PYTHONUNBUFFERED=1
-      - QDRANT_HOST=qdrant-db
+      - QDRANT_HOST=${QDRANT_HOST:-host.docker.internal}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
@@ -135,6 +144,8 @@ services:
       - OTEL_SERVICE_NAME=second-service-custom-mcp-work
       - OTEL_RESOURCE_ATTRIBUTES=service.name=second-service-custom-mcp-work,service.version=1.0
       - SERVICE_LOG_FILE=/var/log/services/second-service-custom-mcp-work/app.log
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./second-service-custom-mcp-work:/second-service-custom-mcp-work
       - ../.devcontainer/requirements.txt:/second-service-custom-mcp-work/requirements.txt

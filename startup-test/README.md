@@ -17,8 +17,8 @@ Test type note: these are static file-content assertions, not runtime integratio
 The full script follows this order:
 
 1. Ensure external Docker networks exist (`mcp-net`, `observability`)
-2. Start `qdrant-db` and wait for `http://localhost:6333/healthz`
-3. Run service tests (`tests/test_qdrant_service.py`) with `QDRANT_HOST=localhost`
+2. Ensure host-level persistent Qdrant is running and wait for `http://localhost:6333/healthz`
+3. Run service tests (`tests/test_qdrant_service.py`) with `QDRANT_HOST=host.docker.internal` (use `localhost` only when running tests directly on host)
 4. Start observability stack (`observability/docker-compose.observability.yml`)
 5. Wait for Grafana and Alloy health endpoints
 6. Run observability contract tests
