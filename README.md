@@ -157,13 +157,13 @@ graph TD
 	VSCode --> Shell
 	DockerDesktop --> WSL2
 	Shell -- docker compose / docker CLI --> InnerDocker
-	InnerDocker -. optional profile inner-qdrant .-> Qdrant
+	InnerDocker -- creates/starts --> Qdrant
 	InnerDocker -- creates/starts --> Main
 	InnerDocker -- creates/starts --> Second
 	InnerDocker -- creates/starts --> Alloy
 	InnerDocker -- creates/starts --> LGTM
 	InnerDocker -- creates/starts --> Grafana
-	Main -- QDRANT_HOST=host.docker.internal --> Qdrant
+	Main -- triggers upsert workflow --> Qdrant
 	Main -- OTLP/logs --> Alloy
 	Second -- OTLP/logs --> Alloy
 	Qdrant -- metrics/logs --> Alloy
