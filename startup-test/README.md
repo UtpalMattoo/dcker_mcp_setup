@@ -9,7 +9,7 @@ This folder provides the canonical WSL bash entrypoints for startup sequencing a
 - `cleanup.sh`: Compose teardown helper with optional network pruning
 
 Simple summary: these checks make sure the observability setup files include the expected services and safety rules.
-Technical definition: observability config contracts require expected compose wiring (`lgtm` + `alloy`, `OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317`, external `observability` network, no `docker.sock`) and required Alloy redaction/import rules in `observability/alloy/config/*.river`.
+Technical definition: observability config contracts require expected compose wiring (`lgtm` + `alloy`, `OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317`, localhost-only published observability ports, external `observability` network, no `docker.sock`) and required Alloy redaction/import rules in `observability/alloy/config/*.river`.
 Test type note: these are static file-content assertions, not runtime integration tests.
 
 ## Why this order

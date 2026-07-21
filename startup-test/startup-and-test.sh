@@ -154,8 +154,7 @@ main() {
   ensure_network "mcp-net"
   ensure_network "observability"
 
-  log "Starting qdrant-db"
-  docker compose -f "$SERVICES_COMPOSE" up -d qdrant-db
+  log "Using host-level persistent Qdrant"
 
   log "Waiting for Qdrant health endpoint"
   if ! wait_for_http "http://localhost:6333/healthz" 90; then
@@ -164,7 +163,7 @@ main() {
   fi
 
   if [[ "$SKIP_SERVICE_TESTS" == false ]]; then
-    QDRANT_HOST=localhost run_pytest "Running service tests" tests/test_qdrant_service.py -v
+    QDRANT_HOST=host.docker.internal run_pytest "Running service tests" tests/test_qdrant_service.py -v
   else
     log "Skipping service tests"
   fi

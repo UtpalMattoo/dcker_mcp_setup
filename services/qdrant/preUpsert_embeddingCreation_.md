@@ -6,9 +6,9 @@
 - [Phase 2 — Document Processing Pipeline](#phase-2--document-processing-pipeline)
 - [Phase 3 — Qdrant Integration and Persistence](#phase-3--qdrant-integration-and-persistence)
 - [Phase 4 — CLI-Based Ingestion](#phase-4--cli-based-ingestion)
-- [Phase 5 — Gmail Integration](#phase-5--gmail-integration)
-- [Phase 6 — Search API](#phase-6--search-api)
-- [Phase 7 — Frontend UI](#phase-7--frontend-ui)
+- [Phase 5 — Search API](#phase-5--search-api)
+- [Phase 6 — Frontend UI](#phase-6--frontend-ui)
+- [Phase 7 — Gmail Integration](#phase-7--gmail-integration)
 - [Phase 8 — Production Readiness](#phase-8--production-readiness)
 - [Additional Requirements and Clarifications](#additional-requirements-and-clarifications)
 
@@ -190,26 +190,32 @@ Requirements:
    - Modify upsert workflow.
    - Automatically generate embeddings before insertion.
 
-3) Collection Management (how collections are created, selected, and maintained)
+3) Persistent Collection Load
+   - Load embeddings into the persistent host Qdrant instance.
+   - Recreate or refresh the target collection as needed.
+   - Verify vector dimensions before writing.
+   - Confirm the load activity is visible through Alloy and Grafana.
+
+4) Collection Management (how collections are created, selected, and maintained)
    - Support configurable collections.
    - Allow collection creation if missing.
 
-4) Metadata Storage (store document/chunk context with each vector)
+5) Metadata Storage (store document/chunk context with each vector)
    - Store all chunk metadata in Qdrant payloads.
 
-5) Persistent Storage (data remains after container restart)
+6) Persistent Storage (data remains after container restart)
    - Configure Docker volumes for persistence.
    - Store vector data in a parent-level folder outside the application source tree.
 
-6) Shared Visibility (same stored data is visible from both environments)
+7) Shared Visibility (same stored data is visible from both environments)
    - Storage location must be visible:
      - from local host
      - from devcontainer
 
-7) Validation (guardrails to prevent schema/model mismatch)
+8) Validation (guardrails to prevent schema/model mismatch)
    - Verify collection dimensions match selected embedding model.
 
-8) Testing (integration-level checks across service boundaries)
+9) Testing (integration-level checks across service boundaries)
    - Integration tests:
      - collection creation
      - vector insertion
@@ -272,7 +278,7 @@ Acceptance criteria:
 - Progress is visible.
 
 
-### Phase 5 — Gmail Integration
+### Phase 7 — Gmail Integration
 
 Implement Gmail ingestion support.
 
@@ -316,7 +322,7 @@ Acceptance criteria:
 - Duplicate ingestion is prevented.
 
 
-### Phase 6 — Search API
+### Phase 5 — Search API
 
 Implement a backend semantic search API.
 
@@ -361,7 +367,7 @@ Acceptance criteria:
 - APIs are documented.
 
 
-### Phase 7 — Frontend UI
+### Phase 6 — Frontend UI
 
 Implement a frontend UI for ingestion and search.
 

@@ -88,7 +88,7 @@
 
 ### 1.4 Qdrant Database Logs
 
-**Location:** Qdrant container stdout/stderr
+**Location:** Host Qdrant log directory mounted into Alloy (`<QDRANT_HOST_LOGS_DIR>`)
 
 **Contents:**
 - Vector database initialization

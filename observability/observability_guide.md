@@ -427,7 +427,7 @@ A shared external Docker network simplifies communication between stacks.
 ## Step 1 — Create the Network
 
 ```bash
-docker network create telemetry-net
+docker network create observability
 ```
 
 ---
@@ -438,7 +438,7 @@ Example:
 
 ```yaml
 networks:
-  telemetry-net:
+  observability:
     external: true
 ```
 
@@ -447,6 +447,12 @@ Benefits:
 * services can reach Alloy
 * Alloy can reach LGTM
 * compose stacks remain separated
+
+Host exposure policy for local and single-host development:
+
+* publish observability ports on localhost only (`127.0.0.1`)
+* keep container-to-container communication on the Docker `observability` network
+* do not rely on host-wide `0.0.0.0` port publishing unless explicitly required
 
 ---
 

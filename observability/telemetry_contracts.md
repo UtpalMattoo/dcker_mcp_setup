@@ -22,22 +22,22 @@ Each service explicitly declares:
 
 ### 2.1 Qdrant Database Service
 
-**Container:** `qdrant-db`
+**Container:** `qdrant-host`
 
-**Service Name:** `qdrant-db`
+**Service Name:** `qdrant-host`
 
 **Exported Telemetry:**
 
 | Type | Method | Endpoint | Port | Format | Required |
 |------|--------|----------|------|--------|----------|
-| Metrics | Prometheus scrape | `http://qdrant-db:6333/metrics` | 6333 | Prometheus text | YES |
+| Metrics | Prometheus scrape | `http://host.docker.internal:6333/metrics` | 6333 | Prometheus text | YES |
 | Logs | stdout/stderr | Container logs | - | plaintext | YES |
 | Traces | None | - | - | - | NO (future) |
 
 **Environment Variables:**
 ```bash
-OTEL_SERVICE_NAME=qdrant-db
-OTEL_RESOURCE_ATTRIBUTES=service.name=qdrant-db,service.version=latest,deployment.environment=local
+OTEL_SERVICE_NAME=qdrant-host
+OTEL_RESOURCE_ATTRIBUTES=service.name=qdrant-host,service.version=latest,deployment.environment=local
 ```
 
 **Alloy Collection:**
@@ -45,18 +45,18 @@ OTEL_RESOURCE_ATTRIBUTES=service.name=qdrant-db,service.version=latest,deploymen
 # Prometheus metrics scrape
 prometheus.scrape "qdrant_metrics" {
   targets = [{
-    __address__           = "qdrant-db:6333",
+    __address__           = "host.docker.internal:6333",
     __metrics_path__      = "/metrics",
     job                   = "qdrant",
   }]
   scrape_interval = "30s"
 }
 
-# Logs via file tail from mounted container logs
-loki.source.file "qdrant_logs" {
+# Logs via file tail from mounted host logs
+loki.source.file "qdrant_host_logs" {
   targets = [{
-    __path__ = "/mnt/service-logs/qdrant/*.log",
-    service_name = "qdrant-db",
+    __path__ = "/mnt/qdrant-host-logs/*.log",
+    service_name = "qdrant-host",
   }]
 }
 ```
@@ -70,9 +70,9 @@ loki.source.file "qdrant_logs" {
 
 **Testing Checklist:**
 - [ ] Qdrant service starts and exposes metrics on port 6333
-- [ ] `http://qdrant-db:6333/metrics` returns Prometheus-formatted metrics
+- [ ] `http://host.docker.internal:6333/metrics` returns Prometheus-formatted metrics
 - [ ] Metrics include `qdrant_*` prefix (e.g., `qdrant_searches_total`)
-- [ ] Container logs are captured and forwarded to Loki
+- [ ] Host Qdrant logs are captured from the mounted host log directory and forwarded to Loki
 - [ ] Redaction filters do not interfere with metric labels
 
 ---
@@ -310,13 +310,18 @@ When contracts change (e.g., new telemetry types added):
 
 **DNS Resolution:**
 - Services can reach Alloy via `http://alloy:4317` or `http://alloy:4318`
-- Alloy resolves service names (e.g., `qdrant-db:6333`)
+- Alloy resolves host gateway names (e.g., `host.docker.internal:6333`)
+
+**Host Exposure Policy (local/single-host):**
+- Host-published observability ports must bind to `127.0.0.1`.
+- Use Docker network DNS (`alloy`, `lgtm`) for container-to-container telemetry traffic.
+- Do not expose OTLP, Zipkin, Grafana, or Alloy UI to all interfaces unless explicitly required.
 
 **Port Mapping:**
 | Service | Internal Port | Network | Exposure |
 |---------|---------------|---------|----------|
 | alloy | 4317, 4318 | observability | OTLP receiver |
-| qdrant-db | 6333 | observability | Metrics/API |
+| qdrant-host | 6333 | observability | Metrics/API |
 | main_starter_service | - | observability | OTLP sender |
 | second-service-custom-mcp-work | - | observability | OTLP sender |
 

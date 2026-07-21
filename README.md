@@ -125,7 +125,7 @@ Detailed runtime view:
 graph TD
 	subgraph Host[Windows Host]
 		VSCode[VS Code]
-		DockerDesktop[Docker Desktop persistent Qdrant]
+		HostQdrant[Persistent Qdrant]
 	end
 
 	subgraph WSL2[WSL2 MicroVM]
@@ -139,7 +139,7 @@ graph TD
 				Main[main_starter_service]
 			end
 			subgraph Dependencies["Downstream Runtime Dependencies"]
-				Qdrant[qdrant-db optional points to host]
+				Qdrant[qdrant-db optional]
 			end
 			subgraph PeerServices["Peer Services (Not Orchestrated by Main)"]
 				Second[second-service-custom-mcp-work]
@@ -155,18 +155,19 @@ graph TD
 	end
 
 	VSCode --> Shell
-	DockerDesktop --> WSL2
+	HostQdrant --> WSL2
 	Shell -- docker compose / docker CLI --> InnerDocker
-	InnerDocker -- creates/starts --> Qdrant
+	InnerDocker -. optional profile inner-qdrant .-> Qdrant
 	InnerDocker -- creates/starts --> Main
 	InnerDocker -- creates/starts --> Second
 	InnerDocker -- creates/starts --> Alloy
 	InnerDocker -- creates/starts --> LGTM
 	InnerDocker -- creates/starts --> Grafana
-	Main -- triggers upsert workflow --> Qdrant
+	Main -- QDRANT_HOST=host.docker.internal --> HostQdrant
 	Main -- OTLP/logs --> Alloy
 	Second -- OTLP/logs --> Alloy
-	Qdrant -- metrics/logs --> Alloy
+	HostQdrant -- metrics/logs --> Alloy
+	Qdrant -- metrics/logs (if enabled) --> Alloy
 	Alloy -- forwards telemetry --> LGTM
 	Grafana -- queries --> LGTM
 	Grafana --> VizMarker
@@ -214,23 +215,23 @@ Source: services/qdrant/preUpsert_embeddingCreation_.md
 
 3. Phase 3 - Qdrant integration and persistence
 - Status: partially implemented
-- Expand collection lifecycle, persistence, and integration tests.
+- Expand collection lifecycle, persistence, host Qdrant load/rebuild flow, and integration tests.
 
 4. Phase 4 - CLI-based ingestion
 - Status: planned
-- Add CLI args, validation, and progress output.
+- Add CLI args, validation, and progress output for the load/rebuild flow.
 
-5. Phase 5 - Gmail integration
-- Status: planned
-- Add OAuth ingestion, filters, metadata preservation, and incremental sync.
-
-6. Phase 6 - Search API
+5. Phase 5 - Search API
 - Status: planned
 - Add /search, metadata filtering, and health endpoints.
 
-7. Phase 7 - Frontend UI
+6. Phase 6 - Frontend UI
 - Status: planned
 - Add upload flow, collection views, and semantic search UI.
+
+7. Phase 7 - Gmail integration
+- Status: planned
+- Add OAuth ingestion, filters, metadata preservation, and incremental sync.
 
 8. Phase 8 - Production readiness
 - Status: planned
@@ -333,6 +334,7 @@ Default behavior uses a host-level persistent Qdrant endpoint so both local runs
 - App services now resolve Qdrant via `QDRANT_HOST` and default to `host.docker.internal`.
 - Start host-level Qdrant once (outside inner DinD) and keep it running for shared persistence.
 - Optional inner Qdrant remains available behind compose profile `inner-qdrant`.
+- Host Qdrant metrics and logs are collected through Alloy when `QDRANT_HOST_LOGS_DIR` is mounted.
 
 Examples:
 

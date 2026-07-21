@@ -3,11 +3,11 @@
 
 prometheus.scrape "qdrant_metrics" {
   targets = [{
-    __address__           = "qdrant-db:6333",
+    __address__           = "host.docker.internal:6333",
     __scheme__            = "http",
     __metrics_path__      = "/metrics",
     job                   = "qdrant",
-    service_name          = "qdrant-db",
+    service_name          = "qdrant-host",
   }]
 
   scrape_interval = "30s"

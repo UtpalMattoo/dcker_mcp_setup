@@ -6,7 +6,6 @@ loki.source.file "docker_app_logs" {
   // Read from Docker container log files
   // Typically at /var/lib/docker/containers/{container_id}/{container_id}-json.log
   // Instead of using docker.sock, we mount explicit paths
-  
   targets = [{
     __path__       = "/mnt/service-logs/*/*.log",
     service_name   = "application",
@@ -98,7 +97,50 @@ loki.write "app_logs" {
   }
 }
 
-// Optional: Also read Qdrant logs if enabled
+// Host-level Qdrant logs collected from a mounted host log directory
+loki.source.file "qdrant_host_logs" {
+  targets = [{
+    __path__       = "/mnt/qdrant-host-logs/*.log",
+    service_name   = "qdrant-host",
+    source_type    = "host",
+  }]
+
+  file_match {
+    enabled = true
+  }
+
+  forward_to = [loki.process.qdrant_host_redaction.receiver]
+}
+
+loki.process "qdrant_host_redaction" {
+  stage.regex {
+    expression = "api[_-]?key[\"\\s:=]*([A-Za-z0-9\\-._~+/]+=*)"
+    action     = "replace"
+    replace    = "apikey=<REDACTED_API_KEY>"
+  }
+
+  stage.labels {
+    values = {
+      service = "qdrant-host",
+      env     = "local",
+    }
+  }
+
+  forward_to = [loki.write.qdrant_host_logs.receiver]
+}
+
+loki.write "qdrant_host_logs" {
+  loki {
+    url = "http://lgtm:3100/loki/api/v1/push"
+  }
+
+  external_labels = {
+    service = "qdrant-host",
+    environment = "local",
+  }
+}
+
+// Optional: Also read inner Qdrant logs if enabled
 loki.source.file "qdrant_logs" {
   targets = [{
     __path__       = "/mnt/service-logs/qdrant/*.log",

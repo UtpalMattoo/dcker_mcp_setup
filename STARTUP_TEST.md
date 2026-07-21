@@ -3,7 +3,7 @@
 Use the startup-test folder for canonical startup order, test execution, and teardown.
 
 Simple summary: the contract checks confirm observability setup files include required services and safety rules.
-Technical definition: observability config contracts require expected compose wiring (`lgtm` + `alloy`, `OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317`, external `observability` network, no `docker.sock`) and required Alloy redaction/import rules in `observability/alloy/config/*.river`.
+Technical definition: observability config contracts require expected compose wiring (`lgtm` + `alloy`, `OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317`, localhost-only published observability ports, external `observability` network, no `docker.sock`) and required Alloy redaction/import rules in `observability/alloy/config/*.river`.
 Test type note: these are static file-content assertions, not runtime integration tests.
 
 - Full ordered startup and tests: [startup-test/startup-and-test.sh](startup-test/startup-and-test.sh)

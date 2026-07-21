@@ -1,28 +1,23 @@
-// Minimal runtime Alloy config for local startup tests.
+// Runtime Alloy config for the live observability stack.
 
-loki.write "app_logs" {
-  endpoint {
-    url = "http://lgtm:3100/loki/api/v1/push"
-  }
-
-  external_labels = {
-    service     = "application",
-    environment = "local",
-  }
+import.file "traces_otlp" {
+  filename = "/etc/alloy/traces-otlp.river"
 }
 
-loki.source.file "docker_app_logs" {
-  targets = [{
-    __path__     = "/mnt/service-logs/*/*.log",
-    service_name = "application",
-    source_type  = "docker",
-  }]
+import.file "metrics_qdrant" {
+  filename = "/etc/alloy/metrics-qdrant.river"
+}
 
-  file_match {
-    enabled = true
-  }
+import.file "logs_vscode" {
+  filename = "/etc/alloy/logs-vscode.river"
+}
 
-  forward_to = [loki.write.app_logs.receiver]
+import.file "logs_copilot" {
+  filename = "/etc/alloy/logs-copilot.river"
+}
+
+import.file "logs_docker" {
+  filename = "/etc/alloy/logs-docker.river"
 }
 
 logging {

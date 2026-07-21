@@ -4,10 +4,10 @@ services:
     image: grafana/otel-lgtm:latest
     container_name: otel-lgtm
     ports:
-      - "3000:3000"    # Grafana UI
-      - "4317:4317"    # OTLP gRPC receiver
-      - "4318:4318"    # OTLP HTTP receiver
-      - "9411:9411"    # Zipkin receiver
+      - "127.0.0.1:3000:3000"    # Grafana UI (localhost only)
+      - "127.0.0.1:4317:4317"    # OTLP gRPC receiver (localhost only)
+      - "127.0.0.1:4318:4318"    # OTLP HTTP receiver (localhost only)
+      - "127.0.0.1:9411:9411"    # Zipkin receiver (localhost only)
     env_file:
       - ./grafana/env/grafana.env
     environment:
@@ -35,11 +35,12 @@ services:
     container_name: grafana-alloy
     command: run /etc/alloy/runtime.river --server.http.listen-addr=0.0.0.0:12345
     ports:
-      - "12345:12345"  # Alloy UI
+      - "127.0.0.1:12345:12345"  # Alloy UI (localhost only)
     volumes:
       - ./alloy/config:/etc/alloy:ro
       - alloy-data:/var/lib/alloy
       - ./runtime-logs:/mnt/service-logs:ro
+      - ${QDRANT_HOST_LOGS_DIR:-${APPDATA}/Qdrant/logs}:/mnt/qdrant-host-logs:ro
       - ${VSCODE_LOGS_DIR:-${APPDATA}/Code/logs}:/mnt/vscode-logs:ro
       - ${COPILOT_EXTENSION_LOGS_DIR:-${APPDATA}/Code/User/globalStorage/GitHub.copilot}:/mnt/copilot-logs:ro
     env_file:
@@ -51,6 +52,8 @@ services:
       - ENABLE_SERVICE_LOGS=${ENABLE_SERVICE_LOGS:-true}
       - ENABLE_QDRANT_LOGS=${ENABLE_QDRANT_LOGS:-true}
       - REDACTION_MODE=${REDACTION_MODE:-strict}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       lgtm:
         condition: service_healthy

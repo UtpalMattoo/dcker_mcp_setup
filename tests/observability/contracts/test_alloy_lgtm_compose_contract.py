@@ -32,3 +32,12 @@ def test_shared_observability_network_is_external() -> None:
     assert "networks:" in text
     assert "observability:" in text
     assert "external: true" in text
+
+
+def test_published_observability_ports_are_localhost_only() -> None:
+    text = _compose_text()
+    assert "127.0.0.1:3000:3000" in text
+    assert "127.0.0.1:4317:4317" in text
+    assert "127.0.0.1:4318:4318" in text
+    assert "127.0.0.1:9411:9411" in text
+    assert "127.0.0.1:12345:12345" in text
