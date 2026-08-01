@@ -19,7 +19,8 @@ GRAFANA_PASSWORD = os.getenv("GRAFANA_PASSWORD", "admin")
 LOKI_DATASOURCE_UID = os.getenv("LOKI_DATASOURCE_UID", "loki-dev")
 
 ROOT = Path(__file__).resolve().parents[3]
-FLOW_LOG_PATH = ROOT / "observability" / "runtime-logs" / "main_starter_service" / "flow_test.log"
+# The runtime Alloy config tails app.log for main_starter_service.
+FLOW_LOG_PATH = ROOT / "observability" / "runtime-logs" / "main_starter_service" / "app.log"
 
 
 def _get_json(url: str, timeout: float = 3.0) -> dict:
@@ -110,7 +111,7 @@ def test_runtime_log_reaches_loki_via_alloy() -> None:
 
     while time.time() < deadline:
         end_ns = int(time.time() * 1_000_000_000)
-        expr = f'{{service="application"}} |= "{token}"'
+        expr = f'{{service="main_starter_service"}} |= "{token}"'
         try:
             payload = _grafana_loki_query_range(expr, start_ns=start_ns, end_ns=end_ns)
             lines = _extract_loki_lines(payload)
