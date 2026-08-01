@@ -1,3 +1,5 @@
+declare "vscode_logs" {
+
 // VS Code logs collection module
 // Tails VS Code logs with path redaction before forwarding to Loki
 
@@ -62,4 +64,6 @@ loki.write "default" {
     service = "vscode",
     environment = "local",
   }
+}
+
 }

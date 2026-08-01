@@ -172,18 +172,17 @@ observability/
 
 ```text
 alloy/config/
-├── runtime.river
-├── alloy.river
-├── logs-vscode.river
-├── logs-copilot.river
-├── logs-docker.river
-├── metrics-qdrant.river
-└── traces-otlp.river
+├── runtime.river          ← active entrypoint (single flat config)
+├── logs-vscode.river      ← reference only (not imported at runtime)
+├── logs-copilot.river     ← reference only (not imported at runtime)
+├── logs-docker.river      ← reference only (not imported at runtime)
+├── metrics-qdrant.river   ← reference only (not imported at runtime)
+└── traces-otlp.river      ← reference only (not imported at runtime)
 ```
 
-`runtime.river` is the current compose entrypoint loaded by Alloy at container startup.
+`runtime.river` is the active Alloy entrypoint loaded at container startup. It is a single flat River file — all components are defined inline. The other `.river` files are kept for reference but are **not imported** at runtime.
 
-This structure separates telemetry pipelines by signal type instead of combining everything into one configuration file.
+> **Why flat?** Alloy's `import.file` mechanism requires imported files to contain only `declare` and `import` blocks. Top-level component blocks (`loki.source.file`, `otelcol.receiver.otlp`, etc.) are not valid inside a module. To avoid a startup loop, all pipeline components were consolidated into `runtime.river` directly.
 
 Benefits include:
 

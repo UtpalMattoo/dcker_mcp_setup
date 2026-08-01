@@ -1,12 +1,6 @@
 // Root Alloy configuration - orchestrates modular telemetry collection
 // This file includes all sub-modules for traces, metrics, and logs
 
-// Global settings for the Alloy instance
-local.file "environment" {
-  filename  = "/etc/alloy/alloy.env"
-  is_secret = false
-}
-
 // OTLP Traces receiver and processor
 import.file "traces_otlp" {
   filename = "/etc/alloy/traces-otlp.river"

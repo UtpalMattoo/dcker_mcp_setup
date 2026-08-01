@@ -22,6 +22,35 @@ class JsonFormatter(logging.Formatter):
             "service": os.getenv("OTEL_SERVICE_NAME", "main_starter_service"),
             "message": record.getMessage(),
         }
+        skip_keys = {
+            "name",
+            "msg",
+            "args",
+            "levelname",
+            "levelno",
+            "pathname",
+            "filename",
+            "module",
+            "exc_info",
+            "exc_text",
+            "stack_info",
+            "lineno",
+            "funcName",
+            "created",
+            "msecs",
+            "relativeCreated",
+            "thread",
+            "threadName",
+            "processName",
+            "process",
+            "message",
+            "asctime",
+        }
+        for key, value in record.__dict__.items():
+            if key in skip_keys:
+                continue
+            if isinstance(value, (str, int, float, bool)):
+                payload[key] = value
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload)
@@ -29,14 +58,15 @@ class JsonFormatter(logging.Formatter):
 
 def configure_logging() -> logging.Logger:
     logger = logging.getLogger("main_starter_service")
-    logger.setLevel(logging.INFO)
-    logger.handlers.clear()
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.handlers.clear()
 
     formatter = JsonFormatter()
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
-    logger.addHandler(stdout_handler)
+    root_logger.addHandler(stdout_handler)
 
     log_file = os.getenv(
         "SERVICE_LOG_FILE", "/var/log/services/main_starter_service/app.log"
@@ -45,8 +75,9 @@ def configure_logging() -> logging.Logger:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     file_handler = logging.FileHandler(log_path, encoding="utf-8")
     file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    root_logger.addHandler(file_handler)
 
+    logger.setLevel(logging.INFO)
     return logger
 
 

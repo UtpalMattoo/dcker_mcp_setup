@@ -16,8 +16,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_EXPLORE_ENABLED=true
     volumes:
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/provisioning:/otel-lgtm/grafana/conf/provisioning:ro
     healthcheck:
       test:
         - CMD-SHELL

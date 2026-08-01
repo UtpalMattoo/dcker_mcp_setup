@@ -1,3 +1,5 @@
+declare "traces_otlp" {
+
 // OTLP Traces receiver and processor module
 // Receives traces via OTLP gRPC and HTTP, applies processing, and exports to LGTM
 
@@ -35,4 +37,6 @@ otelcol.exporter.otlp "lgtm" {
       insecure = true
     }
   }
+}
+
 }

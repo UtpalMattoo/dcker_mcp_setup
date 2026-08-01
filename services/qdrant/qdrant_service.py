@@ -4,8 +4,13 @@ Why this exists: provide a small storage-focused layer for vector operations,
 while keeping embedding/provider logic outside this module.
 """
 
+import logging
+from time import perf_counter
+
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointIdsList, PointStruct, VectorParams, Distance
+
+logger = logging.getLogger("qdrant_service")
 
 
 class QdrantHelper:
@@ -52,17 +57,33 @@ class QdrantHelper:
 
     def upsert(self, vector, payload, point_id):
         """Insert or update one vector point."""
-        self._validate_vector_dimension(vector)
-        self.client.upsert(
-            collection_name=self.collection,
-            points=[
-                PointStruct(
-                    id=point_id,
-                    vector=vector,
-                    payload=payload,
-                )
-            ],
-        )
+        started_at = perf_counter()
+        success = False
+        try:
+            self._validate_vector_dimension(vector)
+            self.client.upsert(
+                collection_name=self.collection,
+                points=[
+                    PointStruct(
+                        id=point_id,
+                        vector=vector,
+                        payload=payload,
+                    )
+                ],
+            )
+            success = True
+        finally:
+            logger.log(
+                logging.INFO if success else logging.ERROR,
+                "qdrant_upsert_event",
+                extra={
+                    "upsert_status": "success" if success else "error",
+                    "upsert_latency_ms": round((perf_counter() - started_at) * 1000, 3),
+                    "collection": self.collection,
+                    "point_id": str(point_id),
+                    "vector_dim": len(vector),
+                },
+            )
 
     def upsert_embedding(self, vector, payload, point_id):
         # This function adds a new vector OR updates an existing one

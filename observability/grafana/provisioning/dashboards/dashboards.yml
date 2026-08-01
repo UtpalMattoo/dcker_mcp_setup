@@ -9,7 +9,7 @@ providers:
     updateIntervalSeconds: 10
     allowUiUpdates: true
     options:
-      path: /etc/grafana/provisioning/dashboards/development
+      path: /otel-lgtm/grafana/conf/provisioning/dashboards/development
 
   - name: 'Restricted-Logs'
     orgId: 1
@@ -19,4 +19,4 @@ providers:
     updateIntervalSeconds: 10
     allowUiUpdates: false
     options:
-      path: /etc/grafana/provisioning/dashboards/restricted
+      path: /otel-lgtm/grafana/conf/provisioning/dashboards/restricted

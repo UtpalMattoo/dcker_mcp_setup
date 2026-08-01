@@ -60,6 +60,13 @@ Optional environment source:
 
 - `../.env.local` for `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD`
 
+Before first observability startup, create local env files from templates:
+
+```bash
+cp observability/alloy/env/alloy.env.example observability/alloy/env/alloy.env
+cp observability/grafana/env/grafana.env.example observability/grafana/env/grafana.env
+```
+
 ## Usage
 
 From repository root:

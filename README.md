@@ -78,8 +78,11 @@ dcker_mcp_setup/
 8. [LGTM in This Project](#lgtm-in-this-project)
 9. [Security](#security)
 10. [Quick Start](#quick-start)
-11. [Who This Is For](#who-this-is-for)
-12. [Status](#status)
+11. [Shared Qdrant Mode](#shared-qdrant-mode)
+12. [Upsert Observability](#upsert-observability)
+13. [Observability Issues and Fixes](#observability-issues-and-fixes)
+14. [Who This Is For](#who-this-is-for)
+15. [Status](#status)
 
 ## Project Setup
 
@@ -351,6 +354,101 @@ docker compose -f services/docker-compose.yml --profile inner-qdrant up -d qdran
 - Developers exploring agent-service patterns
 - Teams wanting safer setups (containerized) and observability
 - Developers building/experimenting with a reproducible startup, testing, and telemetry behavior 
+
+## Upsert Observability
+
+Qdrant upsert operations are observable end-to-end through the existing LGTM stack. No additional infrastructure is needed.
+
+### How it works
+
+Every call to `QdrantHelper.upsert()` in `services/qdrant/qdrant_service.py` emits a structured JSON log event immediately after the Qdrant call completes (success or failure):
+
+```json
+{
+  "message": "qdrant_upsert_event",
+  "upsert_status": "success",
+  "upsert_latency_ms": 12.5,
+  "collection": "embeddings",
+  "point_id": "1",
+  "vector_dim": 384
+}
+```
+
+Alloy tails `observability/runtime-logs/main_starter_service/app.log`, parses the `service` field from JSON as a Loki label, and pushes to Loki. Grafana queries Loki to render the dashboard.
+
+### Grafana dashboard
+
+Open: **http://localhost:3000/d/qdrant-upsert-observability** (admin / admin)
+
+| Panel | What it shows |
+|---|---|
+| Upserts (success, selected range) | Total successful upserts in the selected time window |
+| Upserts / minute | Throughput time series |
+| Upsert errors / minute | Error rate time series |
+| Upsert latency p95 (ms) | 95th-percentile latency derived from `upsert_latency_ms` |
+| Upsert latency avg (ms) | Average latency |
+| Recent upsert events | Raw log panel — live structured events |
+
+Set the dashboard time range to **Last 15 minutes** to see recent events.
+
+### Alloy config (`observability/alloy/config/runtime.river`)
+
+The config is a single flat River file — no `import.file` modules. Key sections:
+
+- `otelcol.receiver.otlp` — receives OTLP traces from services on port 4317
+- `loki.source.file` + `loki.process` — tails service log files, parses JSON, promotes `service` and `level` as Loki labels, pushes to Loki
+- `prometheus.scrape` + `prometheus.remote_write` — scrapes Qdrant metrics from `host.docker.internal:6333`
+
+---
+
+## Observability Issues and Fixes
+
+A record of issues discovered and resolved during initial bring-up.
+
+### Issue 1 — Alloy `import.file` modules require `declare` wrapper
+
+**Symptom:** Alloy logged `only declare and import blocks are allowed in a module` for every imported `.river` file and restarted in a loop.
+
+**Root cause:** Alloy's `import.file` syntax requires the imported file to contain only `declare` and `import` blocks. The existing files contained top-level component blocks (`loki.source.file`, `otlp.receiver`, etc.) which are not valid inside a module.
+
+**Fix:** Consolidated all component blocks directly into `runtime.river` as a single flat config. The separate per-concern `.river` files remain in the repo for reference but are no longer imported at runtime.
+
+---
+
+### Issue 2 — Alloy River syntax errors (Promtail-style blocks)
+
+**Symptom:** Alloy failed to load with errors like `unrecognized block name "protocols"`, `unrecognized attribute name "optional"`, `unknown escape sequence`.
+
+**Root cause:** The River config was written with Promtail/older-Alloy syntax:
+- `otlp.receiver` instead of `otelcol.receiver.otlp`
+- `protocols { grpc {} http {} }` block which does not exist in Alloy River — `grpc {}` and `http {}` are direct children
+- `local.file` with `optional = true` which is not a valid attribute
+- `loki.write "x" { loki { url = ... } }` — the inner block is `endpoint { url = ... }` in current Alloy
+- `stage.regex` with `action`/`replace` attributes which are Promtail syntax
+
+**Fix:** Rewrote `runtime.river` using correct Alloy River component names and block shapes.
+
+---
+
+### Issue 3 — `service` label hardcoded as `"application"` in Loki
+
+**Symptom:** Grafana dashboard panels querying `{service="main_starter_service"}` returned no results even though the log file contained the events.
+
+**Root cause:** The previous `loki.process` pipeline used `stage.labels { values = { service = "application" } }` — a static string — instead of reading the `service` field parsed from the JSON log body.
+
+**Fix:** Changed `stage.labels` to use `service = "service"` so the label value is taken from the parsed JSON field, not hardcoded.
+
+---
+
+### Issue 4 — `loki.source.file` glob patterns not resolved
+
+**Symptom:** Alloy logged `stat /mnt/service-logs/*/*.log: no such file or directory` on startup.
+
+**Root cause:** `loki.source.file` does not expand shell-style glob patterns in `__path__`. Each path must be a concrete file path.
+
+**Fix:** Replaced the single glob target with two explicit targets — one per service log file.
+
+---
 
 ## Status
 

@@ -1,3 +1,5 @@
+declare "docker_logs" {
+
 // Docker/Application logs collection module
 // Reads application service logs (main_starter_service, second-service-custom-mcp-work)
 // with credential and path redaction before forwarding to Loki
@@ -74,10 +76,11 @@ loki.process "app_redaction" {
     on_error = "keep"
   }
 
-  // Add labels from parsed fields
+  // Preserve the parsed service field from the structured log line.
+  // This keeps dashboard queries like service="main_starter_service" working.
   stage.labels {
     values = {
-      service = "application",
+      service = "service",
       env     = "local",
     }
   }
@@ -182,4 +185,6 @@ loki.write "qdrant_logs" {
     service = "qdrant",
     environment = "local",
   }
+}
+
 }

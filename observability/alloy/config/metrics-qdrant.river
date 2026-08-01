@@ -1,3 +1,5 @@
+declare "qdrant_metrics" {
+
 // Prometheus metrics scraping module (Qdrant)
 // Scrapes Prometheus metrics from services and exports to LGTM
 
@@ -35,4 +37,6 @@ prometheus.relabel "qdrant_labels" {
 // Export metrics to LGTM (Mimir)
 otelcol.exporter.prometheus "lgtm" {
   endpoint = "lgtm:9009"
+}
+
 }

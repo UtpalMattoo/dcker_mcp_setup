@@ -1,3 +1,5 @@
+declare "copilot_logs" {
+
 // GitHub Copilot extension logs collection module
 // Tails Copilot logs with CRITICAL redaction before forwarding to Loki
 // 
@@ -97,4 +99,6 @@ loki.write "copilot_restricted" {
     environment = "local",
     access_level = "restricted",
   }
+}
+
 }

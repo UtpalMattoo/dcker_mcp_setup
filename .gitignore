@@ -62,6 +62,15 @@ services/main_starter_service/qdrant/
 # Local-only observability path variables
 observability/local_path_variables.md
 
+# Observability local env files (keep local), allow committed templates
+!observability/alloy/env/
+observability/alloy/env/*
+!observability/alloy/env/*.example
+!observability/grafana/env/
+observability/grafana/env/*
+!observability/grafana/env/*.example
+!observability/grafana/provisioning/dashboards/**/*.json
+
 # Any data for a semantic store
 context_data/Python/
 context_data/NBExample/
