@@ -5,128 +5,93 @@ This document captures exactly what is being built in the `.devcontainer` folder
 ## Table of Contents
 
 1. [Folder Layout](#1-folder-layout)
-2. [Dev Container Configuration](#2-dev-container-configuration)
-3. [Post-Create Setup Actions](#3-post-create-setup-actions)
-4. [Google Cloud Support](#4-google-cloud-support)
-5. [Why This Is MicroVM-Optimized](#5-why-this-is-microvm-optimized)
-6. [Isolation Model for MCP Servers](#6-isolation-model-for-mcp-servers)
-7. [How to Use in VS Code](#7-how-to-use-in-vs-code)
-8. [Reproducibility Notes](#8-reproducibility-notes)
-9. [Testing the Qdrant Service](#9-testing-the-qdrant-service)
+2. [Canonical References](#2-canonical-references)
+3. [Dev Container Configuration](#3-dev-container-configuration)
+4. [Post-Create Setup Actions](#4-post-create-setup-actions)
+5. [Not In Use (may change)](#5-not-in-use-now)
+6. [Why This Is MicroVM-Optimized](#6-why-this-is-microvm-optimized)
+7. [Isolation Model for MCP Servers](#7-isolation-model-for-mcp-servers)
+8. [How to Use in VS Code](#8-how-to-use-in-vs-code)
+9. [Reproducibility Notes](#9-reproducibility-notes)
+10. [Testing the Qdrant Service](#10-testing-the-qdrant-service)
 
 ## 1. Folder Layout
 
-Expected files:
-
-- `.devcontainer/devcontainer.json`
-- `.devcontainer/requirements.txt`
-- `.devcontainer/setup.sh`
-- `MICROVM_DEVCONTAINER_STEPS.md`
-- `services/docker-compose.yml`
-- `tests/test_qdrant_service.py`
-- `tests/test_qdrant_service.sh`
-
-Project layout:
+High-level orientation tree:
 
 ```text
 dcker_mcp_setup/
 ├── .devcontainer/
-│   ├── devcontainer-lock.json
-│   ├── devcontainer.json
-│   ├── requirements.txt
-│   └── setup.sh
-├── .gitignore
-├── .vscode/
-│   └── settings.json
-├── MICROVM_DEVCONTAINER_STEPS.md
 ├── docs/
-│   └── runbooks/
-│       └── STARTUP_TEST.md
+│   ├── runbooks/
+│   └── observability/
+├── microvm_devcontainer_steps.md
+├── README.md
 ├── startup-test/
-├── observability/
 ├── services/
-│   ├── docker-compose.yml
-│   ├── main_starter_service/
-│   │   ├── main_server.py
-│   │   └── requirements.txt
-│   ├── qdrant/
-│   │   ├── __init__.py
-│   │   └── qdrant_service.py
-│   └── second-service-custom-mcp-work/
-│       └── python_custom_server.py
+├── observability/
 └── tests/
-   ├── observability/
-   ├── test_qdrant_service.log
-   ├── test_qdrant_service.py
-   └── test_qdrant_service.sh
 ```
 
+This tree is intentionally short so it is less likely to drift over time.
 
-## 2. Dev Container Configuration
+## 2. Canonical References
+
+Use these files as source of truth:
+
+- Full project tree and top-level navigation: `README.md`
+- Startup scenarios and skip/bypass behavior: `docs/runbooks/STARTUP_TEST.md`
+- Script-first startup flow: `startup-test/README.md`
+
+## 3. Dev Container Configuration
 
 ### Note on Dockerfile
 
-This setup does not require a custom Dockerfile. The dev container uses a pre-existing image (e.g., python:3.12) specified in devcontainer.json. All configuration is handled via devcontainer.json, so a Dockerfile is unnecessary unless further customization is needed.
+This setup does not require a custom Dockerfile. The dev container uses a pre-existing image (`python:3.12`) specified in `devcontainer.json`. All configuration is handled via `devcontainer.json`, unless you need additional build-time customization.
 
-Additional setup steps are performed by setup.sh and other scripts referenced in devcontainer.json or this documentation. These scripts build on top of the pre-existing image to install required tools and dependencies.
+Additional setup steps are performed by `setup.sh` and related scripts.
 
-The `devcontainer.json` is configured to:
+The active `devcontainer.json` behavior is:
 
-- Use official upstream Python image: `python:3.12`
-- Install Node.js 20 inside the container
-- Install Google Cloud CLI inside the container
-- Install build tools needed for Python and Node package compilation
-- Enable rootless Docker-in-Docker so Docker CLI usage works inside the Dev Container without depending on the host Docker socket by default
-- Forward common debugging ports: `3000`, `5000`, `8000`, `8080`
-- Join the `mcp-net` Docker network via `runArgs`
-- Run `.devcontainer/setup.sh` after container creation
+- Uses official upstream Python image: `python:3.12`
+- Enables rootless Docker-in-Docker
+- Joins the `mcp-net` Docker network via `runArgs`
+- Runs `.devcontainer/setup.sh` after container creation
+- Forwards ports: `6333`, `5000`, `8000`
 
-These forwarded ports are convenience defaults for common development stacks, such as React or Vite on `3000`, Flask or FastAPI on `5000`, Django or Uvicorn on `8000`, and alternate web apps or preview servers on `8080`. They do not mean four services must be running; only the port your app actually uses needs to be forwarded.
+## 4. Post-Create Setup Actions
 
-## 3. Post-Create Setup Actions
+On first container creation, `.devcontainer/setup.sh` runs automatically via `postCreateCommand`.
 
-On first container creation, `.devcontainer/setup.sh` runs automatically via `postCreateCommand`. This script performs the following steps:
+Active steps:
 
 1. `apt-get update`
 2. `apt-get install -y curl git gnupg ca-certificates apt-transport-https build-essential pkg-config`
-3. `curl -fsSL https://deb.nodesource.com/setup_20.x | bash -` (NodeJS setup)
-4. Add the Google Cloud SDK apt repository and signing key
-5. `apt-get update`
-6. `apt-get install -y nodejs google-cloud-cli`
-7. `pip install --upgrade pip`
-8. `if [ -f .devcontainer/requirements.txt ]; then pip install -r .devcontainer/requirements.txt; fi`
-9. Create the external Docker network `mcp-net` (if it does not already exist)
-   - This network is required by `docker-compose.yml` for inter-container communication
+3. `pip install --upgrade pip`
+4. `if [ -f .devcontainer/requirements.txt ]; then pip install -r .devcontainer/requirements.txt; fi`
+5. Create the external Docker network `mcp-net` if it does not exist
 
-## 4. Google Cloud Support
+## 5. Not In Use now
 
-The environment now includes:
+Status markers to prevent confusion:
 
-- `google-cloud-cli` for `gcloud`, `gsutil`, and ADC login flows
-- Python client libraries for common services:
-   - Cloud Storage
-   - Secret Manager
-   - BigQuery
-   - Vertex AI
-- Google authentication library support for Application Default Credentials
+- Not currently active: Node.js installation in `.devcontainer/setup.sh`
+- Not currently active: Google Cloud CLI installation in `.devcontainer/setup.sh`
+- Not currently active: forwarded ports `3000` and `8080` in `devcontainer.json`
+- Drift risk: any detailed file tree in this document (use `README.md` for full tree)
+- Drift risk: command examples that assume specific profiles or local networking defaults
 
-Typical auth flow inside the container:
+If these features are re-enabled later, update this section first.
 
-```bash
-gcloud auth login
-gcloud auth application-default login
-```
-
-## 5. Why This Is MicroVM-Optimized
+## 6. Why This Is MicroVM-Optimized
 
 - Runs inside WSL2 microVM for strong isolation
 - Enables Docker access from inside Dev Container using rootless Docker-in-Docker
 - Keeps Python base image pure (`python:3.12`)
-- Adds Node only inside Dev Container (not on host)
 - Includes native build tooling to avoid missing compiler errors
 - Supports isolated MCP runtime model
 
-## 6. Isolation Model for MCP Servers
+## 7. Isolation Model for MCP Servers
 
 This setup intentionally does not run MCP servers inside the Dev Container.
 
@@ -145,32 +110,30 @@ docker compose up -d second-service-custom-mcp-work
 
 Current compose services in this project:
 
-- `qdrant-db` - pre-built Qdrant vector database service
-- `main_starter_service` - startup container for installing Python dependencies used by the main orchestrator work
-- `second-service-custom-mcp-work` - placeholder custom MCP service container
+- `qdrant-db` - profile-gated inner Qdrant service (`inner-qdrant`)
+- `main_starter_service` - startup container for main orchestrator work
+- `second-service-custom-mcp-work` - custom MCP service container
 
-## 7. How to Use in VS Code
+## 8. How to Use in VS Code
 
 1. Open the project in VS Code.
 2. Run: **Dev Containers: Rebuild and Reopen in Container**.
 3. Wait for post-create steps to complete.
 4. Confirm toolchain:
    - `python --version`
-   - `node --version`
    - `docker --version`
-   - `gcloud --version`
 
 Workspace note:
 
 - In this environment the project is mounted at `/workspaces/dcker_mcp_setup`.
 
-## 8. Reproducibility Notes
+## 9. Reproducibility Notes
 
 - Keep all Python packages pinned in `requirements.txt`.
 - Keep all tooling setup in `postCreateCommand`.
 - Avoid manual ad-hoc installs to maintain reproducible rebuilds.
 
-## 9. Testing the Qdrant Service
+## 10. Testing the Qdrant Service
 
 ### Why We Run These Tests from the Dev Container Terminal
 
