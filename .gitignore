@@ -60,7 +60,6 @@ services/main_starter_service/qdrant/
 *.log
 
 # Local-only observability path variables
-observability/local_path_variables.md
 
 # Observability local env files (keep local), allow committed templates
 !observability/alloy/env/

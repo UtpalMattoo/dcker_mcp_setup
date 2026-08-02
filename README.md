@@ -1,11 +1,12 @@
 # dcker_mcp_setup
 
-Project tree snapshot (source and docs only; generated artifacts like `.venv`, `.pytest_cache`, logs, and `__pycache__` are omitted):
+Project tree snapshot (source and docs only):
 
 ```text
 dcker_mcp_setup/
 ├── .devcontainer/
 │   └── requirements.txt
+├── .vscode/
 ├── context_data/
 ├── observability/
 │   ├── alloy/
@@ -16,13 +17,25 @@ dcker_mcp_setup/
 │   │   ├── env/
 │   │   ├── provisioning/
 │   │   └── rbac/
-│   ├── docker-compose.observability.yml
-│   ├── implementation_requirement_mapping.md
-│   ├── local_path_variables.md
-│   ├── log_sensitivity_assessment.md
-│   ├── observability_guide.md
-│   ├── secure_alloy_lgtm_observability_prompt.md
-│   └── telemetry_contracts.md
+│   ├── runtime-logs/
+│   └── docker-compose.observability.yml
+├── docs/
+│   ├── architecture/
+│   │   ├── architecture.png
+│   │   ├── architecture_srtict_isolation.png
+│   │   ├── Docker-isolation-setup.png
+│   │   ├── mcp-net.png
+│   │   └── project_setup.png
+│   ├── history/
+│   │   ├── implementation_requirement_mapping.md
+│   │   └── secure_alloy_lgtm_observability_prompt.md
+│   ├── observability/
+│   │   ├── local_path_variables.md
+│   │   ├── log_sensitivity_assessment.md
+│   │   ├── observability_guide.md
+│   │   └── telemetry_contracts.md
+│   └── runbooks/
+│       └── STARTUP_TEST.md
 ├── services/
 │   ├── ai_pipeline/
 │   │   ├── embedding/
@@ -60,9 +73,8 @@ dcker_mcp_setup/
 │   │   └── test_provider_factory.py
 │   ├── test_qdrant_service.py
 │   └── test_qdrant_service.sh
-├── MICROVM_DEVCONTAINER_STEPS.md
+├── microvm_devcontainer_steps.md
 ├── pytest.ini
-├── STARTUP_TEST.md
 └── README.md
 ```
 
@@ -86,18 +98,30 @@ dcker_mcp_setup/
 
 ## Project Setup
 
-Local environment for developing and testing AI-agent workflows. It isolates development, services, and observability.
+This is a local environment for AI-agent development and testing.
+It keeps development, services, and observability isolated.
 
-This setup uses rootless Docker - Docker runs without full system-level (admin/root) privileges. If a container is compromised, it has fewer permissions and is less likely to affect the host machine.
+It uses rootless Docker.
+That means Docker runs without full admin/root privileges.
+If a container is compromised, host impact is reduced.
 
 ## Docker Setup
 
-This project uses a rootless Docker-in-Docker setup inside the Dev Container.
+This project uses rootless Docker-in-Docker inside the Dev Container.
 
-- The Dev Container runs its own Docker daemon instead of mounting the host Docker socket. This means Docker commands inside the container talk to an internal daemon, not directly to your host machine's Docker engine. Relevant diagrams: [Docker-isolation-setup.png](Docker-isolation-setup.png), [architecture_srtict_isolation.png](architecture_srtict_isolation.png).
-- Service containers run from the Dev Container through that inner daemon. In practice, a service started from the Dev Container, is launched by this container's own Docker runtime. Relevant diagrams: [project_setup.png](project_setup.png), [Docker-isolation-setup.png](Docker-isolation-setup.png).
-- The Dev Container joins the shared `mcp-net` network for service communication. This gives the inner Docker-managed services a predictable network path for talking to each other. Relevant diagrams: [mcp-net.png](mcp-net.png), [project_setup.png](project_setup.png).
-- The host Docker socket remains disabled by default for stricter isolation. The Dev Container does not have direct control over the host Docker daemon if something goes wrong. Relevant diagrams: [architecture_srtict_isolation.png](architecture_srtict_isolation.png), [Docker-isolation-setup.png](Docker-isolation-setup.png).
+- The Dev Container runs its own Docker daemon.
+- The host Docker socket is not mounted.
+- Docker commands inside the container talk to the inner daemon, not the host engine.
+- Service containers started from the Dev Container are launched by that inner runtime.
+- The Dev Container joins the shared `mcp-net` network for service-to-service traffic.
+- The host Docker daemon stays isolated from the Dev Container.
+
+Diagrams:
+
+- [docs/architecture/Docker-isolation-setup.png](docs/architecture/Docker-isolation-setup.png)
+- [docs/architecture/architecture_srtict_isolation.png](docs/architecture/architecture_srtict_isolation.png)
+- [docs/architecture/project_setup.png](docs/architecture/project_setup.png)
+- [docs/architecture/mcp-net.png](docs/architecture/mcp-net.png)
 
 
 
@@ -105,7 +129,7 @@ Different views:
 
 
 
-At a high level, the model is:
+High-level model:
 
 - Windows host -> WSL2 -> Dev Container -> inner Docker daemon -> project services
 
@@ -176,11 +200,16 @@ graph TD
 	Grafana --> VizMarker
 ```
 
-Connector legend: `creates/starts` means container lifecycle control by the inner Docker daemon. `OTLP/logs/metrics`, `forwards telemetry`, and `queries` are runtime data-flow links.
+Connector legend:
+
+- `creates/starts` means lifecycle control by the inner Docker daemon.
+- `OTLP/logs/metrics`, `forwards telemetry`, and `queries` are runtime data-flow links.
 
 ## Why This Exists
 
-Separating services, tools, and telemetry run together to keep boundaries explicit:
+The goal is clear boundaries between app runtime and observability.
+
+In this setup:
 
 - Development happens in a Dev Container inside WSL2
 - Service containers run separately on controlled shared networks
@@ -199,10 +228,10 @@ Separating services, tools, and telemetry run together to keep boundaries explic
 
 Services emit telemetry -> Alloy processes it -> LGTM stores and visualizes it.
 
-- Search using Qdrant as the vector database for semantic search, embedding storage, and retrieval—needed for RAG‑style workflows.
-- Containerized and modular, making it straightforward to plug in additional AI components or swap services without disrupting the rest of the stack.
-- Observability set up through Grafana, Alloy, and LGTM, covering metrics, logs, and traces for AI‑related workloads.
-- Agent‑service pattern structure: small, focused services handle specific responsibilities and can be composed into more complex behaviors.
+- Qdrant is the vector database for semantic search and embedding storage.
+- The stack is modular, so services can be swapped with low disruption.
+- Observability uses Grafana, Alloy, and LGTM for logs, metrics, and traces.
+- Services are small and focused, then composed into larger workflows.
 
 ## Embedding Roadmap (Phases)
 
@@ -242,7 +271,7 @@ Source: services/qdrant/preUpsert_embeddingCreation_.md
 
 ## Phase 1 Sequence Diagram
 
-This shows what happens in Phase 1 when text is converted into an embedding and saved.
+This shows the Phase 1 path from text to stored embedding.
 
 ```mermaid
 sequenceDiagram
@@ -297,24 +326,25 @@ sequenceDiagram
 6. The vector size is checked to avoid bad data.
 7. The vector is saved in Qdrant.
 
-If anything fails, the process stops with a clear error instead of silently continuing.
+If anything fails, the process stops with a clear error.
 
 ## LGTM in This Project
 
-LGTM is the observability backend bundle used by this repo:
+LGTM is the observability backend bundle used by this repo.
 
 - Loki: stores and indexes logs
 - Grafana: visualization and dashboards
 - Tempo: distributed traces backend
 - Mimir: metrics backend
 
-In this setup, Grafana Alloy collects and forwards telemetry into the LGTM backends, and Grafana queries those backends to render dashboards.
+In this setup, Alloy collects and forwards telemetry to LGTM.
+Grafana queries LGTM to render dashboards.
 
 Where visualization happens:
 
-- Visualization happens in Grafana (the UI/dashboard layer)
-- In the diagram, this is the `Grafana -- queries --> LGTM` connection
-- In the repo, the visualization configuration is under `observability/grafana/`
+- Visualization happens in Grafana.
+- In the diagram, this is `Grafana -- queries --> LGTM`.
+- In the repo, related config is under `observability/grafana/`.
 
 ## Security
 
@@ -326,7 +356,7 @@ Where visualization happens:
 ## Quick Start
 
 1. Rebuild and reopen in the Dev Container (VS Code).
-2. Use startup script in startup-test.
+2. Run the startup script in startup-test.
 3. Validate service health, then observability health.
 4. Confirm logs, metrics, and traces in Grafana.
 
@@ -335,7 +365,8 @@ Where visualization happens:
 Default behavior uses a host-level persistent Qdrant endpoint so both local runs and Dev Container runs can query the same vector store.
 
 - App services now resolve Qdrant via `QDRANT_HOST` and default to `host.docker.internal`.
-- Start host-level Qdrant once (outside inner DinD) and keep it running for shared persistence.
+- Start host-level Qdrant once (outside inner DinD).
+- Keep it running for shared persistence.
 - Optional inner Qdrant remains available behind compose profile `inner-qdrant`.
 - Host Qdrant metrics and logs are collected through Alloy when `QDRANT_HOST_LOGS_DIR` is mounted.
 
@@ -361,7 +392,8 @@ Qdrant upsert operations are observable end-to-end through the existing LGTM sta
 
 ### How it works
 
-Every call to `QdrantHelper.upsert()` in `services/qdrant/qdrant_service.py` emits a structured JSON log event immediately after the Qdrant call completes (success or failure):
+Every call to `QdrantHelper.upsert()` in `services/qdrant/qdrant_service.py` writes a structured JSON log event.
+This happens right after the Qdrant call succeeds or fails.
 
 ```json
 {
@@ -374,11 +406,19 @@ Every call to `QdrantHelper.upsert()` in `services/qdrant/qdrant_service.py` emi
 }
 ```
 
-Alloy tails `observability/runtime-logs/main_starter_service/app.log`, parses the `service` field from JSON as a Loki label, and pushes to Loki. Grafana queries Loki to render the dashboard.
+Alloy tails `observability/runtime-logs/main_starter_service/app.log`.
+It parses the `service` field as a Loki label.
+Then it pushes logs to Loki.
+Grafana queries Loki for dashboard panels.
 
 ### Grafana dashboard
 
-Open: **http://localhost:3000/d/qdrant-upsert-observability** (admin / admin)
+Open: **http://localhost:3000/d/qdrant-upsert-observability**.
+
+Credentials:
+
+- Use `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD` from your startup environment.
+- If you use `startup-test/startup-and-test.sh` without overrides, defaults are `change_me` / `change_me_strong`.
 
 | Panel | What it shows |
 |---|---|
@@ -393,60 +433,13 @@ Set the dashboard time range to **Last 15 minutes** to see recent events.
 
 ### Alloy config (`observability/alloy/config/runtime.river`)
 
-The config is a single flat River file — no `import.file` modules. Key sections:
+The config is a single flat River file.
+It does not use `import.file` modules.
+Key sections:
 
 - `otelcol.receiver.otlp` — receives OTLP traces from services on port 4317
 - `loki.source.file` + `loki.process` — tails service log files, parses JSON, promotes `service` and `level` as Loki labels, pushes to Loki
 - `prometheus.scrape` + `prometheus.remote_write` — scrapes Qdrant metrics from `host.docker.internal:6333`
-
----
-
-## Observability Issues and Fixes
-
-A record of issues discovered and resolved during initial bring-up.
-
-### Issue 1 — Alloy `import.file` modules require `declare` wrapper
-
-**Symptom:** Alloy logged `only declare and import blocks are allowed in a module` for every imported `.river` file and restarted in a loop.
-
-**Root cause:** Alloy's `import.file` syntax requires the imported file to contain only `declare` and `import` blocks. The existing files contained top-level component blocks (`loki.source.file`, `otlp.receiver`, etc.) which are not valid inside a module.
-
-**Fix:** Consolidated all component blocks directly into `runtime.river` as a single flat config. The separate per-concern `.river` files remain in the repo for reference but are no longer imported at runtime.
-
----
-
-### Issue 2 — Alloy River syntax errors (Promtail-style blocks)
-
-**Symptom:** Alloy failed to load with errors like `unrecognized block name "protocols"`, `unrecognized attribute name "optional"`, `unknown escape sequence`.
-
-**Root cause:** The River config was written with Promtail/older-Alloy syntax:
-- `otlp.receiver` instead of `otelcol.receiver.otlp`
-- `protocols { grpc {} http {} }` block which does not exist in Alloy River — `grpc {}` and `http {}` are direct children
-- `local.file` with `optional = true` which is not a valid attribute
-- `loki.write "x" { loki { url = ... } }` — the inner block is `endpoint { url = ... }` in current Alloy
-- `stage.regex` with `action`/`replace` attributes which are Promtail syntax
-
-**Fix:** Rewrote `runtime.river` using correct Alloy River component names and block shapes.
-
----
-
-### Issue 3 — `service` label hardcoded as `"application"` in Loki
-
-**Symptom:** Grafana dashboard panels querying `{service="main_starter_service"}` returned no results even though the log file contained the events.
-
-**Root cause:** The previous `loki.process` pipeline used `stage.labels { values = { service = "application" } }` — a static string — instead of reading the `service` field parsed from the JSON log body.
-
-**Fix:** Changed `stage.labels` to use `service = "service"` so the label value is taken from the parsed JSON field, not hardcoded.
-
----
-
-### Issue 4 — `loki.source.file` glob patterns not resolved
-
-**Symptom:** Alloy logged `stat /mnt/service-logs/*/*.log: no such file or directory` on startup.
-
-**Root cause:** `loki.source.file` does not expand shell-style glob patterns in `__path__`. Each path must be a concrete file path.
-
-**Fix:** Replaced the single glob target with two explicit targets — one per service log file.
 
 ---
 

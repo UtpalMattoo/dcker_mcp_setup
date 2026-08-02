@@ -60,12 +60,13 @@ Optional environment source:
 
 - `../.env.local` for `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD`
 
-Before first observability startup, create local env files from templates:
+Before first observability startup, make sure these files exist:
 
-```bash
-cp observability/alloy/env/alloy.env.example observability/alloy/env/alloy.env
-cp observability/grafana/env/grafana.env.example observability/grafana/env/grafana.env
-```
+- `observability/alloy/env/alloy.env`
+- `observability/grafana/env/grafana.env`
+
+If your branch includes `*.example` templates, copy them once.
+If these files already exist, you can skip this step.
 
 ## Usage
 
@@ -102,4 +103,4 @@ bash startup-test/cleanup.sh --prune-networks
 ```
 
 For detailed bypass and conditional self-skip scenarios with concrete invocation examples,
-see [STARTUP_TEST.md](../STARTUP_TEST.md), section "Bypass and Skip Scenarios".
+see [STARTUP_TEST.md](../docs/runbooks/STARTUP_TEST.md), section "Bypass and Skip Scenarios".
