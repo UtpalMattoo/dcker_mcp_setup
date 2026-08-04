@@ -11,9 +11,6 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-from qdrant.qdrant_service import QdrantHelper
-
-
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         payload = {
@@ -108,15 +105,9 @@ def main():
     tracer = trace.get_tracer("main_starter_service")
 
     with tracer.start_as_current_span("startup") as span:
-        qdrant_host = os.environ["QDRANT_HOST"]
+        qdrant_host = os.getenv("QDRANT_HOST", "host.docker.internal")
         span.set_attribute("qdrant.host", qdrant_host)
-        qdrant = QdrantHelper(host=qdrant_host)
-
-        vector = [0.1] * 384
-        with tracer.start_as_current_span("qdrant_upsert"):
-            qdrant.upsert_embedding(vector, {"text": "example"}, point_id=1)
-
-        logger.info("Embedding uploaded")
+        logger.info("main_starter_service initialized", extra={"qdrant_host": qdrant_host})
 
 if __name__ == "__main__":
     main()

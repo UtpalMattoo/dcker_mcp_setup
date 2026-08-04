@@ -34,6 +34,9 @@ numpy==1.26.4
 pandas==2.2.1
 # Optional: Needed only for tabular data processing or analytics.
 
+datasets>=2.20.0,<3
+# Required for precomputed embedding dataset ingestion runner.
+
 
 ###############################
 # AI / AGENT FRAMEWORKS

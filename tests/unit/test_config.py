@@ -72,7 +72,7 @@ def test_load_precomputed_config_defaults(monkeypatch):
 
     config = load_embedding_config(validate_runtime=False)
     assert config.provider == "precomputed"
-    assert config.model == "qdrant-dbpedia-entities-100k-openai-1536"
+    assert config.model == "Qdrant/dbpedia-entities-openai3-text-embedding-3-small-1536-100K"
     assert config.dimensions == 1536
-    assert config.hf_dataset_name == "Qdrant/dbpedia-entities-100k"
+    assert config.hf_dataset_name == "Qdrant/dbpedia-entities-openai3-text-embedding-3-small-1536-100K"
     assert config.hf_dataset_split == "train"
