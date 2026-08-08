@@ -97,14 +97,15 @@ class QdrantHelper:
     def search(self, query_vector, limit=5, score_threshold=None, query_filter=None):
         """Run vector similarity search with optional filter/threshold."""
         self._validate_vector_dimension(query_vector)
-        return self.client.search(
+        result = self.client.query_points(
             collection_name=self.collection,
-            query_vector=query_vector,
+            query=query_vector,
             limit=limit,
             score_threshold=score_threshold,
             query_filter=query_filter,
             with_payload=True,
         )
+        return result.points
 
     def delete_document(self, point_id):
         """Delete one point by id."""
