@@ -8,6 +8,7 @@ This folder is the canonical home for project documentation assets.
 - Observability quick guide: [observability/observability_guide.md](observability/observability_guide.md)
 - Startup runbook: [runbooks/STARTUP_TEST.md](runbooks/STARTUP_TEST.md)
 - Startup scripts and script-local runbook: [../startup-test/README.md](../startup-test/README.md)
+- Backend API reference: [backend_api.md](backend_api.md)
 
 ## Sections
 
